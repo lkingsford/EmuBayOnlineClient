@@ -1,11 +1,11 @@
 import { Ctx } from "boardgame.io";
 import { Client } from "boardgame.io/dist/types/packages/client";
 import {
-    getMinimumBid, IEmuBayState, actions, ACTION_CUBE_LOCATION_ACTIONS, IBond,
+    getMinimumBid, IEmuBayState, actions, ACTION_CUBE_LOCATION_ACTIONS, IBond, BuildMode,
     ICoordinates, getMergableCompanies, CompanyType, stalemateAvailable, getAllowedBuildSpaces, getTakeResourceSpaces, EndGameReason, IEndgameState, activeEndGameConditions
 }
     from "../game/game";
-import { BuildMode, Board } from "../client/board";
+import { Board } from "../client/board";
 
 var grid = document.querySelector("#maingrid")!;
 
