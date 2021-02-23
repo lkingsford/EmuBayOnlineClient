@@ -2,14 +2,12 @@ import * as PIXI from 'pixi.js'
 import * as State from './state'
 import {
     IEmuBayState, MAP, ICoordinates, getAllowedBuildSpaces, getTakeResourceSpaces,
-    resourceCubeCost, resourceCubeRevenue
+    resourceCubeCost, resourceCubeRevenue, BuildMode
 } from '../game/game'
 
 import { Ctx } from 'boardgame.io';
 
-
 enum CubeTexture { EB, TMLC, LW, Narrow, Resource };
-export enum BuildMode { Normal, Narrow };
 
 export class Board extends State.State {
     constructor(app: PIXI.Application,
