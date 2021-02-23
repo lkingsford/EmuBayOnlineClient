@@ -1341,3 +1341,10 @@ export const EmuBayRailwayCompany = {
     },
   }
 };
+
+export const GameInfo = {
+  gameName: "Emu Bay Railway Company",
+  game: EmuBayRailwayCompany,
+  version: 1,
+  client: "ebrc-1"
+}
