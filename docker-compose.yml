@@ -1,28 +1,5 @@
 version: "3"
 services:
-    db:
-        build: ./db
-        container_name: db
-        restart: always
-        ports:
-            - "5432:5432"
-        environment:
-            - POSTGRES_USER=train
-            - POSTGRES_PASSWORD=choochoo
-            - POSTGRES_DB=train
-        volumes:
-            - /var/lib/postgresql/data
-
-    pgadmin4:
-        build: pgadmin
-        environment:
-            PGADMIN_DEFAULT_EMAIL: thelochok@gmail.com
-            PGADMIN_DEFAULT_PASSWORD: bob
-        ports:
-            - "2229:80"
-        volumes:
-            - /var/lib/pgadmin
-
     dev:
         build: dev
         user: node
