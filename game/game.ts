@@ -1,11 +1,5 @@
 import { INVALID_MOVE } from 'boardgame.io/core'
 import { Ctx } from 'boardgame.io'
-import { debug, NormalModuleReplacementPlugin } from 'webpack';
-import { Events } from 'boardgame.io/dist/types/src/plugins/events/events';
-import { BuildMode } from '../client/board';
-import { gameEvent } from 'boardgame.io/dist/types/src/core/action-creators';
-import { map } from 'bluebird';
-import { GC_MODES, systems } from 'pixi.js';
 
 enum CompanyID {
   EB = 0,
@@ -430,6 +424,8 @@ function companyAccessibleTrack(G: IEmuBayState, company: number): ICoordinates[
 
   return coTracks.concat(connectedNarrow);
 }
+
+export enum BuildMode { Normal, Narrow };
 
 export interface IBuildableSpace extends ICoordinates {
   cost: number;
