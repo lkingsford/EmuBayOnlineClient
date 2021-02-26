@@ -1,6 +1,8 @@
 import { INVALID_MOVE } from 'boardgame.io/core'
 import { Ctx } from 'boardgame.io'
 
+export const GAME_ID = "emu-bay-railway-company-1"
+
 enum CompanyID {
   EB = 0,
   TMLC,
@@ -876,6 +878,7 @@ export function activeEndGameConditions(G: IEmuBayState): EndGameReason[] {
 
 // TODO: Detect when there is a stalemate
 export const EmuBayRailwayCompany = {
+  name: GAME_ID,
   setup: (ctx: Ctx): IEmuBayState => {
     let companies = Array.from(CompanyInitialState);
     let bondOrder = ctx.random?.Shuffle(STARTING_BONDS);
@@ -1341,10 +1344,3 @@ export const EmuBayRailwayCompany = {
     },
   }
 };
-
-export const GameInfo = {
-  gameName: "Emu Bay Railway Company",
-  game: EmuBayRailwayCompany,
-  version: 1,
-  client: "ebrc-1"
-}
