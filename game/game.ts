@@ -611,7 +611,7 @@ export const InitialAuctionOrder = [CompanyID.LW, CompanyID.TMLC, CompanyID.EB, 
 
 const IndependentStartingRevenue = 3;
 
-export const CompanyInitialState: ICompany[] = [
+function CompanyInitialState(): ICompany[] { return [
   {
     // EB
     cash: 0,
@@ -720,22 +720,22 @@ export const CompanyInitialState: ICompany[] = [
     companyType: CompanyType.Minor,
     open: false,
   },
-]
+] };
 
-const INITIAL_AVAILABLE_BONDS: IBond[] = [
+function initialAvailableBonds(): IBond[] { return [
   { deferred: true, amount: 10, baseInterest: 6, interestDelta: 1 },
   { deferred: true, amount: 20, baseInterest: 7, interestDelta: 2 },
   { deferred: true, amount: 20, baseInterest: 8, interestDelta: 2 },
   { deferred: true, amount: 30, baseInterest: 9, interestDelta: 2 },
   { deferred: true, amount: 30, baseInterest: 10, interestDelta: 2 },
-]
+] };
 
 // Bonds that are randomly given to the 3 companies
-const STARTING_BONDS: IBond[] = [
+function startingBonds(): IBond[] { return [
   { deferred: true, amount: 0, baseInterest: 0, interestDelta: 0 },
   { deferred: true, amount: 10, baseInterest: 5, interestDelta: 1 },
   { deferred: true, amount: 15, baseInterest: 5, interestDelta: 2 },
-]
+] };
 
 const SETUP_CARDS = [
   // C N NE SE S SW NW
@@ -876,12 +876,12 @@ export function activeEndGameConditions(G: IEmuBayState): EndGameReason[] {
   return reasons;
 }
 
-// TODO: Detect when there is a stalemate
+
 export const EmuBayRailwayCompany = {
   name: GAME_ID,
   setup: (ctx: Ctx): IEmuBayState => {
-    let companies = Array.from(CompanyInitialState);
-    let bondOrder = ctx.random?.Shuffle(STARTING_BONDS);
+    let companies = CompanyInitialState();
+    let bondOrder = ctx.random?.Shuffle(startingBonds());
     bondOrder?.forEach((i, idx) => {
       companies[idx].bonds.push(i);
       companies[idx].cash = i.amount;
@@ -939,7 +939,7 @@ export const EmuBayRailwayCompany = {
       // GT Excluded because in initial auction already
       independentOrder: [CompanyID.MLM, CompanyID.NED, CompanyID.NMF],
       track: track,
-      bonds: Array.from(INITIAL_AVAILABLE_BONDS),
+      bonds: initialAvailableBonds(),
     }
   },
 
