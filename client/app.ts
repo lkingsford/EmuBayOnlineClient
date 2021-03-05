@@ -10,9 +10,14 @@ import * as PIXI from 'pixi.js'
 class EmuBayRailwayCompanyClient {
     private client: any;
     private rootElement: HTMLElement;
-    constructor(rootElement: HTMLElement, playerID: string ) {
+    constructor(rootElement: HTMLElement, mpAddress?: string, playerID?: string, matchId?: string, numPlayers: number = 4 ) {
         this.rootElement = rootElement;
-        this.client = Client({ game: EmuBayRailwayCompany, numPlayers: 3});
+        if (!mpAddress) {
+            // Hotseat
+            this.client = Client({ game: EmuBayRailwayCompany, numPlayers: numPlayers });
+        } else {
+            this.client = Client({ game: EmuBayRailwayCompany, multiplayer: SocketIO({server: mpAddress}), matchID: matchId, playerID: playerID});
+        }
         this.client.start();
     }
 
@@ -29,7 +34,17 @@ class EmuBayRailwayCompanyClient {
 }
 
 const appElement: HTMLElement = document.getElementById('app')!;
-const app = new EmuBayRailwayCompanyClient(appElement, '0');
+const params = new URLSearchParams(window.location.search);
+var app: EmuBayRailwayCompanyClient;
+if (params.has("matchId") && params.has("playerId")) {
+    // Multiplayer
+    app = new EmuBayRailwayCompanyClient(appElement, `${window.location.protocol}//${window.location.host}:${window.location.port}`, params.get('playerId')!, params.get("matchId")!);
+} else
+{
+    // Hotseat
+    app = new EmuBayRailwayCompanyClient(appElement);
+}
+
 
 const loader = PIXI.Loader.shared;
 Board.addResources(loader);
