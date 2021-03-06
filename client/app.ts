@@ -7,6 +7,8 @@ import { Ui } from './ui';
 
 import * as PIXI from 'pixi.js'
 
+localStorage.debug = '*';
+
 class EmuBayRailwayCompanyClient {
     private client: any;
     private rootElement: HTMLElement;
@@ -28,8 +30,14 @@ class EmuBayRailwayCompanyClient {
         let theUi = new Ui()
         mapState.start();
         // Subscribe in this order, as UI may change things the board needs
-        this.client.subscribe((state: State) => theUi.update(state.G as IEmuBayState, state.ctx, this.client, mapState));
-        this.client.subscribe((state: State) => mapState.drawMap(state.G as IEmuBayState, state.ctx));
+        this.client.subscribe((state: State) => {
+            if (state === null) return;
+            theUi.update(state.G as IEmuBayState, state.ctx, this.client, mapState)
+        });
+        this.client.subscribe((state: State) => {
+            if (state === null) return;
+            mapState.drawMap(state.G as IEmuBayState, state.ctx);
+        });
     }
 }
 
@@ -38,7 +46,7 @@ const params = new URLSearchParams(window.location.search);
 var app: EmuBayRailwayCompanyClient;
 if (params.has("matchId") && params.has("playerId")) {
     // Multiplayer
-    app = new EmuBayRailwayCompanyClient(appElement, `${window.location.protocol}//${window.location.host}:${window.location.port}`, params.get('playerId')!, params.get("matchId")!);
+    app = new EmuBayRailwayCompanyClient(appElement, `${window.location.host}`, params.get('playerId')!, params.get("matchId")!);
 } else
 {
     // Hotseat
