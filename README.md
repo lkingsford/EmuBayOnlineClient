@@ -1,4 +1,4 @@
 EMU BAY RAILWAY COMPANY
 -----------------------
 
-Source is available, but this is not free for reuse at this time. Copyright is retained by Lachlan Kingsford.
+Source is available for the use of making further games, but the game itself is copyrighted Lachlan Kingsford.
