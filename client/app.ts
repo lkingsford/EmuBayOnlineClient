@@ -73,7 +73,8 @@ if (params.has("matchId") && params.has("playerId")) {
 }
 else {
     // Hotseat
-    app = new EmuBayRailwayCompanyClient(appElement);
+    let playerCount = (params.has("playerCount")) ? Number(params.get('playerCount')) : 4;
+    app = new EmuBayRailwayCompanyClient(appElement, undefined, undefined, undefined, playerCount);
 }
 
 function continueLoading() {
