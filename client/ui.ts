@@ -29,11 +29,34 @@ export class Ui {
         return `${cash < 0 ? '-' : ''}₤${Math.abs(cash)}`;
     }
 
+    private static PlayersFromMatch(match: any, ctx: Ctx): string[] {
+        let returns: string[] = [];
+        if (match) {
+            let idx = 0;
+            for (var key in match) {
+                ++idx;
+                if (match[key].name) {
+                    returns.push(match[key].name);
+                } else {
+                    returns.push(`Player ${idx}`);
+                }
+            }
+        }
+        else {
+            for (var i = 0; i < ctx.numPlayers; ++i) {
+                returns.push(`Player ${i + 1}`)
+            }
+        }
+        return returns;
+    }
+
     public update(gamestate: IEmuBayState, ctx: Ctx, client: any, board: Board): void {
         // Reset this on update, will set correctly during update
         board.tileClickedOn = undefined;
 
         let boardElement = document.querySelector("#boardrow")!;
+
+        let playerNames = Ui.PlayersFromMatch(client.matchData, ctx);
 
         // Action selector
         {
@@ -219,7 +242,7 @@ export class Ui {
                 let playerCash = gamestate.players[+ctx.currentPlayer].cash;
 
                 let playerH2 = document.createElement("h2");
-                playerH2.innerText = `Player ${ctx.currentPlayer} (${Ui.formatCash(playerCash)})`;
+                playerH2.innerText = `${playerNames[+ctx.currentPlayer]} (${Ui.formatCash(playerCash)})`;
                 contentDiv?.append(playerH2);
 
                 let statusP = document.createElement("p");
@@ -228,7 +251,7 @@ export class Ui {
                     statusText = "No bids"
                 }
                 else {
-                    statusText = `Player ${gamestate.winningBidder} winning on ₤${gamestate.currentBid}`;
+                    statusText = `${playerNames[gamestate.winningBidder!]} winning on ₤${gamestate.currentBid}`;
                 }
 
                 statusP.innerText = statusText;
@@ -266,10 +289,10 @@ export class Ui {
 
         let row2 = document.querySelector(`#row2`);
         if (!row2) {
-                row2 = document.createElement("div");
-                row2.id = `row2`;
-                row2.classList.add('row');
-                document.querySelector("#maingrid")?.insertBefore(row2, boardElement);
+            row2 = document.createElement("div");
+            row2.id = `row2`;
+            row2.classList.add('row');
+            document.querySelector("#maingrid")?.insertBefore(row2, boardElement);
         }
 
         // Endgame tracker
@@ -320,7 +343,7 @@ export class Ui {
             });
         };
 
-        
+
         // Bonds
         {
             let outerDiv = document.querySelector(`#bonds`);
@@ -374,7 +397,7 @@ export class Ui {
                 cardDiv.classList.add("card");
 
                 let playerName = document.createElement("h1");
-                playerName.innerText = `Player ${idx}`
+                playerName.innerText = playerNames[idx];
                 cardDiv.appendChild(playerName);
 
                 contentDiv = document.createElement("div");
@@ -420,10 +443,10 @@ export class Ui {
 
         let coRow = document.querySelector(`#corow`);
         if (!coRow) {
-                coRow = document.createElement("div");
-                coRow.id = `coRow`;
-                coRow.classList.add('row');
-                document.querySelector("#maingrid")?.insertBefore(coRow, boardElement);
+            coRow = document.createElement("div");
+            coRow.id = `coRow`;
+            coRow.classList.add('row');
+            document.querySelector("#maingrid")?.insertBefore(coRow, boardElement);
         }
 
         gamestate.companies.forEach((co, idx) => {
