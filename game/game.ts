@@ -956,7 +956,7 @@ export const EmuBayRailwayCompany = {
       turn: {
         moveLimit: 1,
         order: {
-          first: (G: IEmuBayState, ctx: Ctx) => 0,
+          first: (G: IEmuBayState, ctx: Ctx) => Math.floor(ctx.random!.Number() * ctx.numPlayers),
           next: (G: IEmuBayState, ctx: Ctx) => {
             var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
             if (!G.auctionFinished) {
