@@ -171,13 +171,6 @@
   </style>
 </head>
 </head>
-<script>
-  const thingy = async () => {
-    console.log("doing thing")
-    result = await fetch("http://localhost:3500/games")
-  }
-  thingy();
-</script>
 <body>
   <div id="maingrid">
   <div class="row" id="boardrow">
@@ -186,6 +179,16 @@
       <div class="content" id="board"></div>
     </div></div>
   </div>
+  <div class="row">
+    <div class="item four columns"><div class="card">
+      <h1>Game info</h1>
+      <div class="content">
+        <p><b>Emu Bay Railway Company (2021-01-24 Playtest version)</b></p>
+        <p>Designed by Lachlan Kingsford 2020-21</p> 
+        <p><a href="rules/rules.pdf" target="_blank">Rules</a></p>
+        <p>Available for Print-and-Play from <a href="https://nerdygentleman.itch.io/the-emu-bay-railway-company" target="_blank">itch.io</a></p>
+      </div>
+    </div>
   </div>
 </body>
 </html>

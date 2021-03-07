@@ -30,7 +30,8 @@ module.exports = {
     new CopyWebpackPlugin({
         patterns: [
             { from: 'build/assets', to: 'assets' },
-            { from: 'build/html/css', to: 'css'}
+            { from: 'build/html/css', to: 'css'},
+            { from: 'build/rules', to: 'rules'}
         ]
     }),
     new HTMLWebpackPlugin({
