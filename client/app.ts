@@ -12,36 +12,17 @@ localStorage.debug = '*';
 class EmuBayRailwayCompanyClient {
     private client: any;
     private rootElement: HTMLElement;
-<<<<<<< HEAD
-    constructor(rootElement: HTMLElement, mpAddress?: string, playerID?: string, matchId?: string, numPlayers: number = 4 ) {
-=======
     constructor(rootElement: HTMLElement, mpAddress?: string, playerID?: string, matchId?: string, numPlayers: number = 4) {
->>>>>>> new_creds
         this.rootElement = rootElement;
         if (!mpAddress) {
             // Hotseat
             this.client = Client({ game: EmuBayRailwayCompany, numPlayers: numPlayers });
-<<<<<<< HEAD
-=======
             this.client.start();
             continueLoading();
->>>>>>> new_creds
         } else {
             // Have to get a credential each time due to boardgame.io's 'authenticate' not playing super nicely with
             // the session storage
             let req = new XMLHttpRequest();
-<<<<<<< HEAD
-            req.open("get", "/getCredentials");
-            req.onreadystatechange = () => {
-                if (req.readyState == 4 && req.status == 200) {
-                    let credentials = req.responseText;
-                    this.client = Client({ game: EmuBayRailwayCompany,
-                        multiplayer: SocketIO({server: mpAddress}),
-                        matchID: matchId,
-                        playerID: playerID,
-                        credentials: credentials});
-                } 
-=======
             req.open("get", "/get_credentials");
             req.onreadystatechange = () => {
                 if (req.readyState == 4 && req.status == 200) {
@@ -56,18 +37,12 @@ class EmuBayRailwayCompanyClient {
                     this.client.start();
                     continueLoading();
                 }
->>>>>>> new_creds
                 else if (req.readyState == 4 && req.status != 200) {
                     document.body.innerHTML = `Failed to get credentials (${req.status}) - ${req.responseText}`;
                 }
             }
-<<<<<<< HEAD
-        }
-        this.client.start();
-=======
             req.send();
         }
->>>>>>> new_creds
     }
 
     public pixiApp = new PIXI.Application({ backgroundColor: 0xEEEEFF, width: 1000, height: 1000 });
@@ -93,20 +68,10 @@ const params = new URLSearchParams(window.location.search);
 var app: EmuBayRailwayCompanyClient;
 if (params.has("matchId") && params.has("playerId")) {
     // Multiplayer
-<<<<<<< HEAD
-    
+
     app = new EmuBayRailwayCompanyClient(appElement, `${window.location.host}`, params.get('playerId')!, params.get("matchId")!);
-} else
-{
-    // Hotseat
-    app = new EmuBayRailwayCompanyClient(appElement);
 }
-
-=======
->>>>>>> new_creds
-
-    app = new EmuBayRailwayCompanyClient(appElement, `${window.location.host}`, params.get('playerId')!, params.get("matchId")!);
-} else {
+else {
     // Hotseat
     app = new EmuBayRailwayCompanyClient(appElement);
 }
