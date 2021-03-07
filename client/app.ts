@@ -18,7 +18,23 @@ class EmuBayRailwayCompanyClient {
             // Hotseat
             this.client = Client({ game: EmuBayRailwayCompany, numPlayers: numPlayers });
         } else {
-            this.client = Client({ game: EmuBayRailwayCompany, multiplayer: SocketIO({server: mpAddress}), matchID: matchId, playerID: playerID});
+            // Have to get a credential each time due to boardgame.io's 'authenticate' not playing super nicely with
+            // the session storage
+            let req = new XMLHttpRequest();
+            req.open("get", "/getCredentials");
+            req.onreadystatechange = () => {
+                if (req.readyState == 4 && req.status == 200) {
+                    let credentials = req.responseText;
+                    this.client = Client({ game: EmuBayRailwayCompany,
+                        multiplayer: SocketIO({server: mpAddress}),
+                        matchID: matchId,
+                        playerID: playerID,
+                        credentials: credentials});
+                } 
+                else if (req.readyState == 4 && req.status != 200) {
+                    document.body.innerHTML = `Failed to get credentials (${req.status}) - ${req.responseText}`;
+                }
+            }
         }
         this.client.start();
     }
@@ -46,6 +62,7 @@ const params = new URLSearchParams(window.location.search);
 var app: EmuBayRailwayCompanyClient;
 if (params.has("matchId") && params.has("playerId")) {
     // Multiplayer
+    
     app = new EmuBayRailwayCompanyClient(appElement, `${window.location.host}`, params.get('playerId')!, params.get("matchId")!);
 } else
 {
