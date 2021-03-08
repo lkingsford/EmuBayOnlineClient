@@ -51,6 +51,7 @@ export class Ui {
     }
 
     private playerNames: string[] = [];
+    private playerIsActive: boolean = true;
 
     public update(gamestate: IEmuBayState, ctx: Ctx, client: any, board: Board): void {
         // Reset this on update, will set correctly during update
@@ -59,6 +60,7 @@ export class Ui {
         let boardElement = document.querySelector("#boardrow")!;
 
         this.playerNames = Ui.PlayersFromMatch(client.matchData, ctx);
+        this.playerIsActive = (!client.playerID) || (client.playerID == +ctx.currentPlayer);
 
         // Action selector
         {
@@ -119,7 +121,7 @@ export class Ui {
             if (stage == "removeCube" && stalemateAvailable(gamestate, ctx)) {
                 let stalemateDiv = document.createElement("div");
                 stalemateDiv.innerText = "Declare Stalemate";
-                stalemateDiv.classList.add("chooseableaction");
+                if (this.playerIsActive) stalemateDiv.classList.add("chooseableaction");
                 stalemateDiv.classList.add("endgameable");
                 stalemateDiv.onclick = (ev) => (client.moves.declareStalemate());
                 contentDiv?.appendChild(stalemateDiv);
@@ -148,50 +150,52 @@ export class Ui {
                 actionDiv?.appendChild(spacesP);
 
                 actionDiv!.dataset.actionid = idx.toString();
-                actionDiv!.onclick = (ev) => {
-                    if (!(ev.currentTarget as HTMLElement).classList.contains("chooseableaction")) { return; }
-                    if (stage == "removeCube") {
-                        client.moves.removeCube(+(ev.currentTarget as HTMLDivElement)!.dataset!.actionid!)
-                    }
+                if (this.playerIsActive) {
+                    actionDiv!.onclick = (ev) => {
+                        if (!(ev.currentTarget as HTMLElement).classList.contains("chooseableaction")) { return; }
+                        if (stage == "removeCube") {
+                            client.moves.removeCube(+(ev.currentTarget as HTMLDivElement)!.dataset!.actionid!)
+                        }
 
-                    if (stage == "takeAction") {
-                        switch (+(ev.currentTarget as HTMLDivElement)!.dataset!.actionid!) {
-                            case actions.AuctionShare:
-                                this.clearActionExtras();
-                                contentDiv?.appendChild(this.auctionShareExtra(gamestate, ctx, client));
-                                break;
-                            case actions.BuildTrack:
-                                this.clearActionExtras();
-                                contentDiv?.appendChild(this.buildTrackExtra(gamestate, ctx, client));
-                                break;
-                            case actions.IssueBond:
-                                this.clearActionExtras();
-                                contentDiv?.appendChild(this.issueBondExtra(gamestate, ctx, client));
-                                break;
-                            case actions.Merge:
-                                this.clearActionExtras();
-                                contentDiv?.appendChild(this.mergeExtra(gamestate, ctx, client));
-                                break;
-                            case actions.TakeResources:
-                                this.clearActionExtras();
-                                contentDiv?.appendChild(this.takeResourcesExtra(gamestate, ctx, client));
-                                break;
-                            case actions.PayDividend:
-                                this.clearActionExtras();
-                                client.moves.payDividends();
+                        if (stage == "takeAction") {
+                            switch (+(ev.currentTarget as HTMLDivElement)!.dataset!.actionid!) {
+                                case actions.AuctionShare:
+                                    this.clearActionExtras();
+                                    contentDiv?.appendChild(this.auctionShareExtra(gamestate, ctx, client));
+                                    break;
+                                case actions.BuildTrack:
+                                    this.clearActionExtras();
+                                    contentDiv?.appendChild(this.buildTrackExtra(gamestate, ctx, client));
+                                    break;
+                                case actions.IssueBond:
+                                    this.clearActionExtras();
+                                    contentDiv?.appendChild(this.issueBondExtra(gamestate, ctx, client));
+                                    break;
+                                case actions.Merge:
+                                    this.clearActionExtras();
+                                    contentDiv?.appendChild(this.mergeExtra(gamestate, ctx, client));
+                                    break;
+                                case actions.TakeResources:
+                                    this.clearActionExtras();
+                                    contentDiv?.appendChild(this.takeResourcesExtra(gamestate, ctx, client));
+                                    break;
+                                case actions.PayDividend:
+                                    this.clearActionExtras();
+                                    client.moves.payDividends();
+                            }
                         }
                     }
                 }
 
                 if (stage == "removeCube") {
                     if (filledSpaceCount > 0) {
-                        actionDiv.classList.add("chooseableaction")
+                        if (this.playerIsActive) actionDiv.classList.add("chooseableaction")
                     }
                 }
 
                 if (stage == "takeAction") {
                     if (availableSpaceCount > 0 && idx != gamestate.actionCubeTakenFrom) {
-                        actionDiv.classList.add("chooseableaction")
+                        if (this.playerIsActive) actionDiv.classList.add("chooseableaction")
                     }
                 }
 
@@ -203,7 +207,7 @@ export class Ui {
                 undoDiv.innerText = "Undo";
                 undoDiv.classList.add("actionbox");
                 if (ctx?.numMoves ?? 0 > 0) {
-                    undoDiv.classList.add("chooseableaction");
+                    if (this.playerIsActive) undoDiv.classList.add("chooseableaction");
                     undoDiv.onclick = (ev) => {
                         client.undo()
                     };
@@ -262,7 +266,7 @@ export class Ui {
                 if (phase == "initialAuction" || (phase == "auction" && gamestate.currentBid! > 0)) {
                     let passP = document.createElement("p");
                     passP.innerText = "Pass";
-                    passP.classList.add("chooseableaction");
+                    if (this.playerIsActive) passP.classList.add("chooseableaction");
                     passP.onclick = (pass_ev) => { client.moves.pass(); };
                     contentDiv?.appendChild(passP);
                 }
@@ -274,7 +278,7 @@ export class Ui {
                     for (let bid = minBid; bid <= playerCash; ++bid) {
                         let bidS = document.createElement("span");
                         bidS.innerText = bid.toString();
-                        bidS.classList.add("chooseableaction");
+                        if (this.playerIsActive) bidS.classList.add("chooseableaction");
                         bidS.classList.add("bid");
                         bidS.dataset.bid = bid.toString();
                         bidS.onclick = (bidS_ev) => {
@@ -572,7 +576,7 @@ export class Ui {
             toList.forEach((i) => {
                 let coP = document.createElement("p");
                 coP.classList.add(COMPANY_ABBREV[i.idx]);
-                coP.classList.add("chooseableaction");
+                if (this.playerIsActive) coP.classList.add("chooseableaction");
                 coP.innerText = COMPANY_NAME[i.idx];
                 coP.dataset.co = i.idx.toString();
                 coP.onclick = (cop_ev) => {
@@ -607,7 +611,7 @@ export class Ui {
             available.forEach((i) => {
                 let coP = document.createElement("p");
                 coP.classList.add(COMPANY_ABBREV[i.idx]);
-                coP.classList.add("chooseableaction");
+                if (this.playerIsActive) coP.classList.add("chooseableaction");
                 coP.classList.add("coToChoose")
                 coP.innerText = COMPANY_NAME[i.idx];
                 coP.dataset.co = i.idx.toString();
@@ -636,7 +640,7 @@ export class Ui {
         let bondsP = document.createElement("p");
         gamestate.bonds.forEach((bond, idx) => {
             let bondS = document.createElement("span");
-            bondS.classList.add("chooseableaction");
+            if (this.playerIsActive) bondS.classList.add("chooseableaction");
             bondS.innerText = this.bondToString(bond, false);
             bondS.dataset!.bondId = idx.toString();
             bondS.onclick = (ev) => {
@@ -678,7 +682,7 @@ export class Ui {
         available.forEach((i) => {
             let coP = document.createElement("p");
             coP.classList.add(COMPANY_ABBREV[i.idx]);
-            coP.classList.add("chooseableaction");
+            if (this.playerIsActive) coP.classList.add("chooseableaction");
             coP.classList.add("coToChoose")
             coP.innerText = COMPANY_NAME[i.idx];
             coP.dataset.co = i.idx.toString();
@@ -723,7 +727,7 @@ export class Ui {
             if (this.buildMode != BuildMode.Normal) {
                 if (gamestate.buildsRemaining! > 0) {
                     let switchP = document.createElement("p")
-                    switchP.classList.add("chooseableaction");
+                    if (this.playerIsActive) switchP.classList.add("chooseableaction");
                     switchP.innerText = "Switch to normal track"
                     switchP.onclick = (ev) => {
                         board.buildMode = BuildMode.Normal;
@@ -750,7 +754,7 @@ export class Ui {
             if (this.buildMode != BuildMode.Narrow) {
                 if (gamestate.buildsRemaining! > 0) {
                     let switchP = document.createElement("p")
-                    switchP.classList.add("chooseableaction");
+                    if (this.playerIsActive) switchP.classList.add("chooseableaction");
                     switchP.innerText = "Switch to narrow gauge track"
                     switchP.onclick = (ev) => {
                         board.buildMode = BuildMode.Narrow;
@@ -767,7 +771,7 @@ export class Ui {
 
         if (gamestate.anyActionsTaken) {
             let passP = document.createElement("p");
-            passP.classList.add("chooseableaction");
+            if (this.playerIsActive) passP.classList.add("chooseableaction");
             passP.innerText = "Finish building";
             passP.onclick = (ev) => {
                 client.moves.doneBuilding();
@@ -804,7 +808,7 @@ export class Ui {
         available.forEach((i) => {
             let coP = document.createElement("p");
             coP.classList.add(COMPANY_ABBREV[i.idx]);
-            coP.classList.add("chooseableaction");
+            if (this.playerIsActive) coP.classList.add("chooseableaction");
             coP.classList.add("coToChoose")
             coP.innerText = COMPANY_NAME[i.idx];
             coP.dataset.co = i.idx.toString();
@@ -838,7 +842,7 @@ export class Ui {
         }
         if (gamestate.anyActionsTaken) {
             let passP = document.createElement("p");
-            passP.classList.add("chooseableaction");
+            if (this.playerIsActive) passP.classList.add("chooseableaction");
             passP.innerText = "Finish taking";
             passP.onclick = (ev) => {
                 client.moves.doneTaking();
@@ -864,7 +868,7 @@ export class Ui {
         takeResourcesExtraDiv.appendChild(dirH1);
         available.forEach((i) => {
             let choice = document.createElement("div");
-            choice.classList.add("chooseableaction");
+            if (this.playerIsActive) choice.classList.add("chooseableaction");
             choice.dataset.major = i.major.toString();
             choice.dataset.minor = i.minor.toString();
 
@@ -906,7 +910,7 @@ export class Ui {
                 winnerP.innerText = "No winners! (All bankrupt)";
                 break;
             case 2:
-                winnerP.innerText = `Won by ${gameover.winner.map(i=>this.playerNames[i]).join(",")}`;
+                winnerP.innerText = `Won by ${gameover.winner.map(i => this.playerNames[i]).join(",")}`;
                 break;
             case 1:
                 winnerP.innerText = `Won by ${this.playerNames[gameover.winner[0]]}`;
