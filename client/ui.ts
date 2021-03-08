@@ -50,13 +50,15 @@ export class Ui {
         return returns;
     }
 
+    private playerNames: string[] = [];
+
     public update(gamestate: IEmuBayState, ctx: Ctx, client: any, board: Board): void {
         // Reset this on update, will set correctly during update
         board.tileClickedOn = undefined;
 
         let boardElement = document.querySelector("#boardrow")!;
 
-        let playerNames = Ui.PlayersFromMatch(client.matchData, ctx);
+        this.playerNames = Ui.PlayersFromMatch(client.matchData, ctx);
 
         // Action selector
         {
@@ -242,7 +244,7 @@ export class Ui {
                 let playerCash = gamestate.players[+ctx.currentPlayer].cash;
 
                 let playerH2 = document.createElement("h2");
-                playerH2.innerText = `${playerNames[+ctx.currentPlayer]} (${Ui.formatCash(playerCash)})`;
+                playerH2.innerText = `${this.playerNames[+ctx.currentPlayer]} (${Ui.formatCash(playerCash)})`;
                 contentDiv?.append(playerH2);
 
                 let statusP = document.createElement("p");
@@ -251,7 +253,7 @@ export class Ui {
                     statusText = "No bids"
                 }
                 else {
-                    statusText = `${playerNames[gamestate.winningBidder!]} winning on ₤${gamestate.currentBid}`;
+                    statusText = `${this.playerNames[gamestate.winningBidder!]} winning on ₤${gamestate.currentBid}`;
                 }
 
                 statusP.innerText = statusText;
@@ -397,7 +399,7 @@ export class Ui {
                 cardDiv.classList.add("card");
 
                 let playerName = document.createElement("h1");
-                playerName.innerText = playerNames[idx];
+                playerName.innerText = this.playerNames[idx];
                 cardDiv.appendChild(playerName);
 
                 contentDiv = document.createElement("div");
@@ -904,10 +906,10 @@ export class Ui {
                 winnerP.innerText = "No winners! (All bankrupt)";
                 break;
             case 2:
-                winnerP.innerText = `Won by players ${gameover.winner.join(",")}`;
+                winnerP.innerText = `Won by ${gameover.winner.map(i=>this.playerNames[i]).join(",")}`;
                 break;
             case 1:
-                winnerP.innerText = `Won by player ${gameover.winner[0]}`;
+                winnerP.innerText = `Won by ${this.playerNames[gameover.winner[0]]}`;
                 break;
         }
         gameOverPhase.appendChild(winnerP);
@@ -918,7 +920,7 @@ export class Ui {
 
         gameover.scores.forEach((i) => {
             let scoreLi = document.createElement("li");
-            scoreLi.innerText = `Player ${i.player}: ${Ui.formatCash(i.cash)}`;
+            scoreLi.innerText = `${this.playerNames[i.player]}: ${Ui.formatCash(i.cash)}`;
             scoresUl.appendChild(scoreLi);
         })
 
