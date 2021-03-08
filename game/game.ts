@@ -47,9 +47,10 @@ interface ICompany {
   sharesRemaining: number;
   reservedSharesRemaining: number;
   home?: ICoordinates;
-  independentHomesOwned: ICoordinates[];
+  independentsOwned: ICompany[];
   companyType: CompanyType;
   open: boolean;
+  id: number;
 }
 
 export interface IEmuBayState {
@@ -398,7 +399,7 @@ function companyAccessibleTrack(G: IEmuBayState, company: number): ICoordinates[
   // Annoying narrow
   let connectedNarrow: ICoordinates[] = []
   if (company < 3) {
-    connectedNarrow.push(...G.companies[company].independentHomesOwned);
+    connectedNarrow.push(...G.companies[company].independentsOwned.map((i)=>i.home!));
   } else {
     connectedNarrow.push(G.companies[company].home!);
   }
@@ -496,7 +497,7 @@ export function getAllowedBuildSpaces(G: IEmuBayState, buildmode: BuildMode, com
           relevantHomes = [G.companies[company].home!]
         } else {
           // Must have merged in. Need connection to one of its privates
-          relevantHomes = G.companies[company].independentHomesOwned!;
+          relevantHomes = G.companies[company].independentsOwned!.map((i)=>i.home!);
         }
 
         // This should be cached - a fair bit of repetition happening here.
@@ -624,9 +625,10 @@ function CompanyInitialState(): ICompany[] { return [
     sharesRemaining: 2,
     reservedSharesRemaining: 4,
     home: { x: 2, y: 3 },
-    independentHomesOwned: [],
+    independentsOwned: [],
     companyType: CompanyType.Major,
-    open: true
+    open: true,
+    id: 0,
   },
   {
     // TMLC
@@ -640,9 +642,10 @@ function CompanyInitialState(): ICompany[] { return [
     sharesRemaining: 4,
     reservedSharesRemaining: 0,
     home: { x: 7, y: 3 },
-    independentHomesOwned: [],
+    independentsOwned: [],
     companyType: CompanyType.Major,
-    open: true
+    open: true,
+    id: 1,
   },
   {
     // LW
@@ -656,9 +659,10 @@ function CompanyInitialState(): ICompany[] { return [
     sharesRemaining: 3,
     reservedSharesRemaining: 0,
     home: { x: 7, y: 3 },
-    independentHomesOwned: [],
+    independentsOwned: [],
     companyType: CompanyType.Major,
-    open: true
+    open: true,
+    id: 2,
   },
   {
     // GT
@@ -671,9 +675,10 @@ function CompanyInitialState(): ICompany[] { return [
     sharesHeld: [],
     sharesRemaining: 1,
     reservedSharesRemaining: 0,
-    independentHomesOwned: [],
+    independentsOwned: [],
     companyType: CompanyType.Minor,
-    open: true
+    open: true,
+    id: 3,
   },
   {
     // MLM
@@ -686,9 +691,10 @@ function CompanyInitialState(): ICompany[] { return [
     sharesHeld: [],
     sharesRemaining: 1,
     reservedSharesRemaining: 0,
-    independentHomesOwned: [],
+    independentsOwned: [],
     companyType: CompanyType.Minor,
     open: false,
+    id: 4,
   },
   {
     // NED
@@ -701,9 +707,10 @@ function CompanyInitialState(): ICompany[] { return [
     sharesHeld: [],
     sharesRemaining: 1,
     reservedSharesRemaining: 0,
-    independentHomesOwned: [],
+    independentsOwned: [],
     companyType: CompanyType.Minor,
     open: false,
+    id: 5,
   },
   {
     // NMF
@@ -716,9 +723,10 @@ function CompanyInitialState(): ICompany[] { return [
     sharesHeld: [],
     sharesRemaining: 1,
     reservedSharesRemaining: 0,
-    independentHomesOwned: [],
+    independentsOwned: [],
     companyType: CompanyType.Minor,
     open: false,
+    id: 6,
   },
 ] };
 
@@ -1135,7 +1143,7 @@ export const EmuBayRailwayCompany = {
                 G.companies[major].currentRevenue += G.companies[minor].currentRevenue;
                 G.companies[major].resourcesHeld += G.companies[minor].resourcesHeld;
                 G.companies[major].narrowGaugeRemaining += G.companies[minor].narrowGaugeRemaining;
-                G.companies[major].independentHomesOwned.push(G.companies[minor].home!);
+                G.companies[major].independentsOwned.push(G.companies[minor]);
 
                 // Close minor
                 G.companies[minor].open = false;

@@ -495,6 +495,12 @@ export class Ui {
             revP.classList.add("cash");
             contentDiv?.appendChild(revP);
 
+            if (co.independentsOwned.length != 0) {
+                let indP = document.createElement("p");
+                indP.innerHTML = "Owns " + co.independentsOwned.map(i=>COMPANY_ABBREV[i.id]).join(', ');
+                contentDiv?.appendChild(indP);
+            }
+
             if (co.sharesHeld.length != 0) {
                 let revsplitP = document.createElement("p");
                 revsplitP.innerText += ` (${Ui.formatCash(Math.ceil(Math.abs(co.currentRevenue) / co.sharesHeld.length))} / share)`;
