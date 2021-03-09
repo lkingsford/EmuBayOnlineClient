@@ -12,9 +12,9 @@ localStorage.debug = '*';
 class EmuBayRailwayCompanyClient {
     private client: any;
     private rootElement: HTMLElement;
-    constructor(rootElement: HTMLElement, mpAddress?: string, playerID?: string, matchId?: string, numPlayers: number = 4) {
+    constructor(rootElement: HTMLElement, mp?: boolean, playerID?: string, matchId?: string, numPlayers: number = 4) {
         this.rootElement = rootElement;
-        if (!mpAddress) {
+        if (!mp) {
             // Hotseat
             this.client = Client({ game: EmuBayRailwayCompany, numPlayers: numPlayers });
             this.client.start();
@@ -29,7 +29,7 @@ class EmuBayRailwayCompanyClient {
                     let credentials = req.responseText;
                     this.client = Client({
                         game: EmuBayRailwayCompany,
-                        multiplayer: SocketIO({ server: mpAddress }),
+                        multiplayer: SocketIO(),
                         matchID: matchId,
                         playerID: playerID,
                         credentials: credentials
@@ -69,12 +69,12 @@ var app: EmuBayRailwayCompanyClient;
 if (params.has("matchId") && params.has("playerId")) {
     // Multiplayer
 
-    app = new EmuBayRailwayCompanyClient(appElement, `${window.location.host}`, params.get('playerId')!, params.get("matchId")!);
+    app = new EmuBayRailwayCompanyClient(appElement, true, params.get('playerId')!, params.get("matchId")!);
 }
 else {
     // Hotseat
     let playerCount = (params.has("playerCount")) ? Number(params.get('playerCount')) : 4;
-    app = new EmuBayRailwayCompanyClient(appElement, undefined, undefined, undefined, playerCount);
+    app = new EmuBayRailwayCompanyClient(appElement, false, undefined, undefined, playerCount);
 }
 
 function continueLoading() {
