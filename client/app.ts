@@ -12,7 +12,7 @@ localStorage.debug = '*';
 class EmuBayRailwayCompanyClient {
     private client: any;
     private rootElement: HTMLElement;
-    constructor(rootElement: HTMLElement, mp?: boolean, playerID?: string, matchId?: string, numPlayers: number = 4) {
+    constructor(rootElement: HTMLElement, mp?: boolean, playerID?: string | null, matchId?: string, numPlayers: number = 4) {
         this.rootElement = rootElement;
         if (!mp) {
             // Hotseat
@@ -27,13 +27,24 @@ class EmuBayRailwayCompanyClient {
             req.onreadystatechange = () => {
                 if (req.readyState == 4 && req.status == 200) {
                     let credentials = req.responseText;
-                    this.client = Client({
-                        game: EmuBayRailwayCompany,
-                        multiplayer: SocketIO(),
-                        matchID: matchId,
-                        playerID: playerID,
-                        credentials: credentials
-                    });
+                    if (playerID && playerID != "-1")
+                    {
+                        this.client = Client({
+                            game: EmuBayRailwayCompany,
+                            multiplayer: SocketIO(),
+                            matchID: matchId,
+                            playerID: playerID,
+                            credentials: credentials
+                        });
+                    } else {
+                        // Observer only
+                        this.client = Client({
+                            game: EmuBayRailwayCompany,
+                            multiplayer: SocketIO(),
+                            matchID: matchId,
+                            credentials: credentials
+                        });
+                    }
                     this.client.start();
                     continueLoading();
                 }
@@ -66,10 +77,14 @@ class EmuBayRailwayCompanyClient {
 const appElement: HTMLElement = document.getElementById('app')!;
 const params = new URLSearchParams(window.location.search);
 var app: EmuBayRailwayCompanyClient;
-if (params.has("matchId") && params.has("playerId")) {
+if (params.has("matchId")) {
     // Multiplayer
-
-    app = new EmuBayRailwayCompanyClient(appElement, true, params.get('playerId')!, params.get("matchId")!);
+    if (params.has("playerId")) {
+        app = new EmuBayRailwayCompanyClient(appElement, true, params.get('playerId')!, params.get("matchId")!);
+    } else {
+        // Observer mode
+        app = new EmuBayRailwayCompanyClient(appElement, true, null, params.get("matchId")!);
+    }
 }
 else {
     // Hotseat
