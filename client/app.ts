@@ -42,7 +42,7 @@ class EmuBayRailwayCompanyClient {
                             game: EmuBayRailwayCompany,
                             multiplayer: SocketIO(),
                             matchID: matchId,
-                            credentials: credentials
+                            playerID: "-1"
                         });
                     }
                     this.client.start();
