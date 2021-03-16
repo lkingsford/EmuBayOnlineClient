@@ -111,7 +111,8 @@ export class EmuBayRailwayCompanyClient {
         // This may need caching in the future - because replays whole game each back or forward
         let currentTurnId = this.client.log.length - 1;
         this.visibleTurnId = Math.max(0, Math.min(turnNumber, currentTurnId));
-        this.atCurrent = this.visibleTurnId == currentTurnId;
+        // The last turn could be automatic - hence, current might not be strictly true when expected
+        this.atCurrent = (this.visibleTurnId == currentTurnId) || stateHistory.slice(this.visibleTurnId + 1).every(i=>i.automatic);
 
         let {state, ctx} = stateHistory[this.visibleTurnId];
         // Get the state at this point
@@ -124,6 +125,8 @@ export class EmuBayRailwayCompanyClient {
         const reducer = CreateGameReducer({ game: EmuBayRailwayCompany });
         const stateSnapshots: IHistoricState[] = [];
         let state: State<IEmuBayState> = this.client.initialState;
+
+        stateSnapshots.push({state: this.client.initialState, automatic: false, ctx: this.client.initialState.ctx});
 
         // TODO: Map these types out correctly
         this.client.log.forEach((i: any) => {
