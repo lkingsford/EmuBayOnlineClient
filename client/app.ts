@@ -1,5 +1,5 @@
 import { Client } from 'boardgame.io/client';
-import { State } from 'boardgame.io';
+import { Ctx, State } from 'boardgame.io';
 import { SocketIO } from 'boardgame.io/multiplayer';
 import { CreateGameReducer } from 'boardgame.io/internal';
 import { EmuBayRailwayCompany, IEmuBayState } from '../game/game';
@@ -9,6 +9,8 @@ import { Ui } from './ui';
 import * as PIXI from 'pixi.js'
 
 //localStorage.debug = '*';
+
+interface IHistoricState { state: State<IEmuBayState>, automatic: boolean, ctx: Ctx };
 
 export class EmuBayRailwayCompanyClient {
     private client: any;
@@ -28,8 +30,7 @@ export class EmuBayRailwayCompanyClient {
             req.onreadystatechange = () => {
                 if (req.readyState == 4 && req.status == 200) {
                     let credentials = req.responseText;
-                    if (playerID && playerID != "-1")
-                    {
+                    if (playerID && playerID != "-1") {
                         this.client = Client({
                             game: EmuBayRailwayCompany,
                             multiplayer: SocketIO(),
@@ -84,38 +85,55 @@ export class EmuBayRailwayCompanyClient {
     }
 
     public StepForward() {
-        this.ReviewTurn(this.visibleTurnId + 1);
+        let allStates = this.GetStateHistory();
+        let nextTurn = this.visibleTurnId;
+        do {
+            ++nextTurn;
+        } while ((nextTurn < allStates.length) && allStates[nextTurn].automatic)
+        this.ReviewTurn(allStates, nextTurn);
     }
 
     public StepBack() {
-        this.ReviewTurn(this.visibleTurnId - 1);
+        let allStates = this.GetStateHistory();
+        let nextTurn = this.visibleTurnId;
+        do {
+            --nextTurn;
+        } while ((nextTurn > 0) && allStates[nextTurn].automatic)
+        this.ReviewTurn(allStates, nextTurn);
     }
 
     public JumpToStart() {
-        this.ReviewTurn(0);
+        let allStates = this.GetStateHistory();
+        this.ReviewTurn(allStates, 0);
     }
 
-    private ReviewTurn(turnNumber: number) {
+    private ReviewTurn(stateHistory: IHistoricState[], turnNumber: number) {
         // This may need caching in the future - because replays whole game each back or forward
         let currentTurnId = this.client.log.length - 1;
         this.visibleTurnId = Math.max(0, Math.min(turnNumber, currentTurnId));
         this.atCurrent = this.visibleTurnId == currentTurnId;
 
-        const reducer = CreateGameReducer({ game: EmuBayRailwayCompany });
-        const stateSnapshots = [];
-        let state = this.client.initialState;
-      
-        for (let i = 0; i < this.visibleTurnId; i++) {
-          const { action, automatic } = this.client.log[i];
-          // ignore automatic log entries - in example code, but not including until known to be necessary
-          if (automatic) continue;
-          state = reducer(state, action);
-          stateSnapshots.push(state);
-        }
+        let {state, ctx} = stateHistory[this.visibleTurnId];
         // Get the state at this point
 
-        this!.theUi!.update(state.G as IEmuBayState, state.ctx, this.client, this?.mapState!, this.atCurrent, this.visibleTurnId)
-        this!.mapState!.drawMap(state.G as IEmuBayState, state.ctx);
+        this!.theUi!.update(state.G as IEmuBayState, ctx, this.client, this?.mapState!, this.atCurrent, this.visibleTurnId)
+        this!.mapState!.drawMap(state.G as IEmuBayState, ctx);
+    }
+
+    private GetStateHistory(): IHistoricState[] {
+        const reducer = CreateGameReducer({ game: EmuBayRailwayCompany });
+        const stateSnapshots: IHistoricState[] = [];
+        let state: State<IEmuBayState> = this.client.initialState;
+
+        // TODO: Map these types out correctly
+        this.client.log.forEach((i: any) => {
+            const { action, automatic } = i;
+            // ignore automatic log entries - in example code, but not including until known to be necessary
+            state = reducer(state, action);
+            stateSnapshots.push({ state: state, automatic: automatic, ctx: state.ctx });
+        });
+
+        return stateSnapshots;
     }
 
     private newestState: State | null = null;
