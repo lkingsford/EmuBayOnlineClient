@@ -6,6 +6,7 @@ import {
 }
     from "../game/game";
 import { Board } from "../client/board";
+import { EmuBayRailwayCompanyClient } from "./app";
 
 var grid = document.querySelector("#maingrid")!;
 
@@ -23,6 +24,11 @@ const END_GAME_REASON_TEXT = ["Player quit. ",
     "3 or fewer resources remaining on board. "]
 
 export class Ui {
+    public constructor(client: EmuBayRailwayCompanyClient) {
+        this.client = client;
+    }
+
+    private client: EmuBayRailwayCompanyClient;
     private buildMode: BuildMode = BuildMode.Normal;
 
     private static formatCash(cash: number): string {
@@ -53,14 +59,15 @@ export class Ui {
     private playerNames: string[] = [];
     private playerIsActive: boolean = true;
 
-    public update(gamestate: IEmuBayState, ctx: Ctx, client: any, board: Board): void {
+    public update(gamestate: IEmuBayState, ctx: Ctx, client: any, board: Board, isCurrent: Boolean, visibleTurnId: number): void {
         // Reset this on update, will set correctly during update
         board.tileClickedOn = undefined;
 
         let boardElement = document.querySelector("#boardrow")!;
 
         this.playerNames = Ui.PlayersFromMatch(client.matchData, ctx);
-        this.playerIsActive = (!client.playerID) || (client.playerID == +ctx.currentPlayer);
+        // isCurrent is whether we're current in the match (as opposed to browsing back or forwards)
+        this.playerIsActive = isCurrent && ((!client.playerID) || (client.playerID == +ctx.currentPlayer));
 
         // Action selector
         {
@@ -300,51 +307,76 @@ export class Ui {
             document.querySelector("#maingrid")?.insertBefore(row2, boardElement);
         }
 
-        let controlDiv = document.querySelector("#controls");
-        let startSpan = document.querySelector("#StartSpan") as HTMLSpanElement;
-        let backSpan = document.querySelector("#BackSpan") as HTMLSpanElement;
-        let nextSpan = document.querySelector("#NextSpan") as HTMLSpanElement;
-        let currentSpan = document.querySelector("#CurrentSpan") as HTMLSpanElement;
-        if (!controlDiv) {
-            let controlItemDiv= document.createElement("div");
-            controlItemDiv.classList.add("three", "columns", "item");
+        let controlsDiv = document.querySelector("#controls");
+        if (!controlsDiv) {
+            let controlItemDiv = document.createElement("div");
+            controlItemDiv.classList.add("two", "columns", "item");
             row2.appendChild(controlItemDiv);
 
             let controlCardDiv = document.createElement("div");
             controlCardDiv.classList.add("card");
-            controlCardDiv.id = "controls";
             controlItemDiv.appendChild(controlCardDiv);
 
-            let controlsH0 = document.createElement("h1");
-            controlsH0.textContent = "Review"
-            controlCardDiv.appendChild(controlsH0);
+            let controlsH1 = document.createElement("h1");
+            controlsH1.textContent = "Review"
+            controlCardDiv.appendChild(controlsH1);
 
-            let controlsDiv = document.createElement("div");
+            controlsDiv = document.createElement("div");
+            controlsDiv.classList.add("content");
+            controlsDiv.id = "controls"
             controlCardDiv.appendChild(controlsDiv);
+        }
+        controlsDiv.innerHTML = "";
 
-            startSpan = document.createElement("span");
-            startSpan.innerText = "⏮";
+        let controlsP = document.createElement("p");
+        controlsDiv.appendChild(controlsP);
+
+        let startSpan = document.createElement("span");
+        startSpan.innerText = "Start";
+        startSpan.id = "StartSpan";
+        startSpan.classList.add("smallerchooseable")
+        controlsP.appendChild(startSpan)
+        if (visibleTurnId != 0) {
             startSpan.classList.add("chooseableaction");
-            startSpan.id = "StartSpan";
-            controlCardDiv.appendChild(startSpan)
+            startSpan.onclick = e => {
+                this.client.JumpToStart();
+            }
+        }
 
-            backSpan = document.createElement("span");
-            backSpan.innerText = "◀";
+        let backSpan = document.createElement("span");
+        backSpan.innerText = "Back";
+        backSpan.id = "BackSpan";
+        backSpan.classList.add("smallerchooseable")
+        controlsP.appendChild(backSpan)
+        if (visibleTurnId != 0) {
             backSpan.classList.add("chooseableaction");
-            backSpan.id = "BackSpan";
-            controlCardDiv.appendChild(backSpan)
+            backSpan.onclick = e => {
+                this.client.StepBack();
+            }
+        }
 
-            nextSpan = document.createElement("span");
-            nextSpan.innerText = "▶";
+        let nextSpan = document.createElement("span");
+        nextSpan.innerText = "Next";
+        nextSpan.id = "NextSpan";
+        nextSpan.classList.add("smallerchooseable")
+        controlsP.appendChild(nextSpan)
+        if (!isCurrent) {
             nextSpan.classList.add("chooseableaction");
-            nextSpan.id = "NextSpan";
-            controlCardDiv.appendChild(nextSpan)
+            nextSpan.onclick = e => {
+                this.client.StepForward();
+            }
+        }
 
-            currentSpan = document.createElement("span");
-            currentSpan.innerText = "⏭";
+        let currentSpan = document.createElement("span");
+        currentSpan.innerText = "Now";
+        currentSpan.id = "CurrentSpan";
+        currentSpan.classList.add("smallerchooseable")
+        controlsP.appendChild(currentSpan)
+        if (!isCurrent) {
             currentSpan.classList.add("chooseableaction");
-            currentSpan.id = "CurrentSpan";
-            controlCardDiv.appendChild(currentSpan)
+            currentSpan.onclick = e => {
+                this.client.SkipToCurrent();
+            }
         }
 
         // Endgame tracker
@@ -371,7 +403,7 @@ export class Ui {
                 cardDiv.appendChild(contentDiv);
                 contentDiv.classList.add("content")
 
-                row2.appendChild(outerDiv);
+                row2!.appendChild(outerDiv);
             }
 
             contentDiv!.innerHTML = "";
@@ -420,7 +452,7 @@ export class Ui {
                 cardDiv.appendChild(contentDiv);
                 contentDiv.classList.add("content")
 
-                row2.appendChild(outerDiv);
+                row2!.appendChild(outerDiv);
             };
 
             contentDiv!.innerHTML = "";
@@ -543,7 +575,7 @@ export class Ui {
 
             if (co.independentsOwned.length != 0) {
                 let indP = document.createElement("p");
-                indP.innerHTML = "Owns " + co.independentsOwned.map(i=>COMPANY_ABBREV[i.id]).join(', ');
+                indP.innerHTML = "Owns " + co.independentsOwned.map(i => COMPANY_ABBREV[i.id]).join(', ');
                 contentDiv?.appendChild(indP);
             }
 

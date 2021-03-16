@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "command": "npm run-script serve",
+            "command": "npm run-script run",
             "name": "Run serve",
             "request": "launch",
             "type": "node-terminal",
