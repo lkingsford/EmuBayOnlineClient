@@ -215,7 +215,6 @@ export class Ui {
                 actionsDiv?.appendChild(undoDiv);
             }
 
-
             if (ctx.gameover) {
                 contentDiv?.append(this.gameOverPhase(gamestate, ctx));
             }
@@ -299,6 +298,53 @@ export class Ui {
             row2.id = `row2`;
             row2.classList.add('row');
             document.querySelector("#maingrid")?.insertBefore(row2, boardElement);
+        }
+
+        let controlDiv = document.querySelector("#controls");
+        let startSpan = document.querySelector("#StartSpan") as HTMLSpanElement;
+        let backSpan = document.querySelector("#BackSpan") as HTMLSpanElement;
+        let nextSpan = document.querySelector("#NextSpan") as HTMLSpanElement;
+        let currentSpan = document.querySelector("#CurrentSpan") as HTMLSpanElement;
+        if (!controlDiv) {
+            let controlItemDiv= document.createElement("div");
+            controlItemDiv.classList.add("three", "columns", "item");
+            row2.appendChild(controlItemDiv);
+
+            let controlCardDiv = document.createElement("div");
+            controlCardDiv.classList.add("card");
+            controlCardDiv.id = "controls";
+            controlItemDiv.appendChild(controlCardDiv);
+
+            let controlsH0 = document.createElement("h1");
+            controlsH0.textContent = "Review"
+            controlCardDiv.appendChild(controlsH0);
+
+            let controlsDiv = document.createElement("div");
+            controlCardDiv.appendChild(controlsDiv);
+
+            startSpan = document.createElement("span");
+            startSpan.innerText = "⏮";
+            startSpan.classList.add("chooseableaction");
+            startSpan.id = "StartSpan";
+            controlCardDiv.appendChild(startSpan)
+
+            backSpan = document.createElement("span");
+            backSpan.innerText = "◀";
+            backSpan.classList.add("chooseableaction");
+            backSpan.id = "BackSpan";
+            controlCardDiv.appendChild(backSpan)
+
+            nextSpan = document.createElement("span");
+            nextSpan.innerText = "▶";
+            nextSpan.classList.add("chooseableaction");
+            nextSpan.id = "NextSpan";
+            controlCardDiv.appendChild(nextSpan)
+
+            currentSpan = document.createElement("span");
+            currentSpan.innerText = "⏭";
+            currentSpan.classList.add("chooseableaction");
+            currentSpan.id = "CurrentSpan";
+            controlCardDiv.appendChild(currentSpan)
         }
 
         // Endgame tracker
