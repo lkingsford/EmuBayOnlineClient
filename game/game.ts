@@ -326,7 +326,7 @@ function initialAuctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
   }
   G.playerAfterAuction = G.companies[CompanyID.GT].sharesHeld[0];
   G.auctionFinished = true;
-  ctx.events!.setPhase!('normalPlay');
+  StartPhase(SoftPhase.NormalPlay, G, ctx);;
 }
 
 // More copy paste than there should be
@@ -341,7 +341,7 @@ function auctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
   if (G.companies[G.companyForAuction!].companyType == CompanyType.Minor) {
     G.independentOrder.splice(0, 1);
   }
-  ctx.events!.setPhase!('normalPlay');
+  StartPhase(SoftPhase.NormalPlay, G, ctx);;
   ctx.events!.endTurn!({ next: G.playerAfterAuction });
 }
 
@@ -933,7 +933,6 @@ function TurnNext(G: IEmuBayState, ctx: Ctx): number {
   if (G.firstTurnOfPhase) {
     return G.firstPlayerOfPhase!;
   }
-
   switch (G.softPhase) {
     case SoftPhase.InitialAuction:
       {
@@ -1059,6 +1058,7 @@ export const EmuBayRailwayCompany: Game = {
       removeCube: {
         moves: {
           removeCube: (G: IEmuBayState, ctx: Ctx, action: actions) => {
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             let filledSpaces =
               ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
                 .filter(v => v.value == action)
@@ -1073,14 +1073,14 @@ export const EmuBayRailwayCompany: Game = {
             G.actionCubeLocations[filledSpaces[0].idx] = false;
             ctx.events?.setStage!("takeAction");
           },
-  
+
           declareStalemate: (G: IEmuBayState, ctx: Ctx) => {
             if (stalemateAvailable(G, ctx)) {
               ctx.events!.endGame!(getEndgameState(G, [EndGameReason.stalemate]));
             }
             var availableSpaces = ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
               .filter(v => G.actionCubeLocations[v.idx] == false);
-  
+
           }
         },
       },
@@ -1090,6 +1090,7 @@ export const EmuBayRailwayCompany: Game = {
             if (jiggleCubes(G, actions.BuildTrack) == INVALID_MOVE) {
               return INVALID_MOVE;
             };
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             G.toAct = company;
             G.buildsRemaining = 3;
             G.anyActionsTaken = false;
@@ -1099,6 +1100,7 @@ export const EmuBayRailwayCompany: Game = {
             if (jiggleCubes(G, actions.TakeResources) == INVALID_MOVE) {
               return INVALID_MOVE;
             };
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             G.toAct = company;
             G.mineLocation = null;
             ctx.events?.setStage!("takeResources");
@@ -1117,38 +1119,41 @@ export const EmuBayRailwayCompany: Game = {
               console.log("No shares remaining");
               return INVALID_MOVE;
             }
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             // Check that it's the next independent available if it's independent
             if (G.companies[company].companyType == CompanyType.Minor) {
               if ((G.independentOrder.length == 0) || (company != G.independentOrder[0])) {
                 console.log("Independent not available");
               }
             }
-  
+
             G.playerInitialBidder = +ctx.currentPlayer;
-  
+
             ctx.events?.setPhase!("auction");
           },
-  
+
           issueBond: (G: IEmuBayState, ctx: Ctx, company: number, bond: number) => {
             if (jiggleCubes(G, actions.IssueBond) == INVALID_MOVE) {
               return INVALID_MOVE;
             };
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             G.companies[company].bonds.push(G.bonds[bond]);
             G.companies[company].cash += G.bonds[bond].amount;
             G.bonds.splice(bond, 1);
             ctx.events?.endTurn!();
           },
-  
+
           merge: (G: IEmuBayState, ctx: Ctx, major: number, minor: number) => {
             if (jiggleCubes(G, actions.Merge) == INVALID_MOVE) {
               return INVALID_MOVE;
             };
-  
+
             if (getMergableCompanies(G, ctx).find((i) => i.major == major && i.minor == minor) == undefined) {
               console.log("Merge is invalid")
               return INVALID_MOVE;
             }
-  
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
+
             // Exchange shares
             G.companies[major].sharesHeld.push(G.companies[minor].sharesHeld[0]);
             G.companies[minor].sharesHeld = [];
@@ -1161,7 +1166,7 @@ export const EmuBayRailwayCompany: Game = {
               G.companies[CompanyID.EB].sharesRemaining += 1;
               G.companies[CompanyID.EB].reservedSharesRemaining -= 1;
             }
-  
+
             // Merge stuff in
             G.companies[major].bonds.push(...G.companies[minor].bonds);
             G.companies[major].cash += G.companies[minor].cash;
@@ -1169,17 +1174,18 @@ export const EmuBayRailwayCompany: Game = {
             G.companies[major].resourcesHeld += G.companies[minor].resourcesHeld;
             G.companies[major].narrowGaugeRemaining += G.companies[minor].narrowGaugeRemaining;
             G.companies[major].independentsOwned.push(G.companies[minor]);
-  
+
             // Close minor
             G.companies[minor].open = false;
-  
+
             ctx.events?.endTurn!();
           },
-  
+
           payDividends: (G: IEmuBayState, ctx: Ctx) => {
             if (jiggleCubes(G, actions.PayDividend) == INVALID_MOVE) {
               return INVALID_MOVE;
             };
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             // Pay dividends
             G.companies.forEach((co) => {
               let amount = co.currentRevenue > 0 ? Math.ceil(co.currentRevenue / co.sharesHeld.length) : Math.floor(co.currentRevenue / co.sharesHeld.length);
@@ -1187,12 +1193,12 @@ export const EmuBayRailwayCompany: Game = {
                 G.players[n].cash += amount;
                 console.log(n, " payed ", amount, "for", co)
               });
-  
+
               // Adjust non-deferred debt
               let debtChange = co.bonds.filter((i) => !i.deferred).reduce<number>((p, i) => i.interestDelta + p, 0)
               co.currentRevenue -= debtChange;
               console.log(co, " revenue reduced by ", debtChange)
-  
+
               // Increase debt for each deferred
               co.bonds.filter((i) => i.deferred).forEach((i) => {
                 co.currentRevenue -= i.baseInterest;
@@ -1200,18 +1206,18 @@ export const EmuBayRailwayCompany: Game = {
                 i.deferred = false;
               });
             })
-  
+
             // Check for bankruptcy
             if (G.players.some((i) => i.cash < 0)) {
               ctx.events?.endGame!(getEndgameState(G, [EndGameReason.bankruptcy]));
             }
-  
+
             // Check for other end game conditions
             let reasons: EndGameReason[] = activeEndGameConditions(G);
             if (reasons.length >= 2) {
               ctx.events?.endGame!(getEndgameState(G, reasons));
             }
-  
+
             ctx.events?.endTurn!();
           },
         },
@@ -1229,25 +1235,26 @@ export const EmuBayRailwayCompany: Game = {
                 return INVALID_MOVE;
               }
             }
-  
+
             // Must have build remaining
             if (G.buildsRemaining! <= 0) {
               return INVALID_MOVE;
             }
-  
+
             // Must be in permitted space
             let allowed = getAllowedBuildSpaces(G, buildMode, G.toAct!);
             let thisSpace = allowed.find((i) => i.x == xy.x && i.y == xy.y);
             if (!thisSpace) {
               return INVALID_MOVE;
             };
-  
+
             if (G.companies[G.toAct!].cash < thisSpace.cost) {
               return INVALID_MOVE;
             }
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             G.companies[G.toAct!].cash -= thisSpace.cost;
             G.companies[G.toAct!].currentRevenue += thisSpace.rev;
-  
+
             G.track.push({
               x: xy.x,
               y: xy.y,
@@ -1263,12 +1270,13 @@ export const EmuBayRailwayCompany: Game = {
             G.anyActionsTaken = true;
             G.buildsRemaining! -= 1;
           },
-  
+
           doneBuilding: (G: IEmuBayState, ctx: Ctx) => {
             if (!G.anyActionsTaken) {
               console.log("No track built - can't pass");
               return INVALID_MOVE;
             }
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             ctx.events?.endTurn!();
           }
         },
@@ -1280,22 +1288,23 @@ export const EmuBayRailwayCompany: Game = {
               console.log("Can't take from location");
               return INVALID_MOVE;
             }
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             // Remove resource cube from space
             G.resourceCubes.splice(
               G.resourceCubes.findIndex((i) => i.x == xy.x && i.y == xy.y), 1
             )
-  
+
             G.mineLocation = xy;
-  
+
             // Pay to remove resource cube
             let co = G.companies[G.toAct!];
             co.cash -= resourceCubeCost(G);
-  
+
             // Increase revenue
             co.currentRevenue += resourceCubeRevenue(G, G.toAct!);
-  
+
             co.resourcesHeld += 1;
-  
+
             G.anyActionsTaken = true;
           },
           doneTaking: (G: IEmuBayState, ctx: Ctx) => {
@@ -1303,6 +1312,7 @@ export const EmuBayRailwayCompany: Game = {
               console.log("No resources taken - can't pass");
               return INVALID_MOVE;
             }
+            G.firstTurnOfPhase = false; // Remove after phase bug fixed
             ctx.events?.endTurn!();
           }
         },
@@ -1317,6 +1327,7 @@ export const EmuBayRailwayCompany: Game = {
         // Remove after phase bug fixed
         return INVALID_MOVE;
       }
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
 
       if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
         G.winningBidder = +ctx.currentPlayer;
@@ -1340,7 +1351,9 @@ export const EmuBayRailwayCompany: Game = {
       if (G.softPhase != SoftPhase.InitialAuction && G.softPhase != SoftPhase.Auction) {
         // Remove after phase bug fixed
         return INVALID_MOVE;
-      }
+      };
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+
       if (G.softPhase == SoftPhase.Auction) {
         if (G.currentBid == 0 && +ctx.currentPlayer == G.playerInitialBidder) {
           // First player must bid, in auction that's not initial
@@ -1350,7 +1363,6 @@ export const EmuBayRailwayCompany: Game = {
 
       G.passed![+ctx.currentPlayer] = true;
       var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-      ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
       if (biddersRemaining <= 1) {
         if (G.currentBid != 0 || biddersRemaining == 0) {
           // All other players passed and bid made, or all players passed
@@ -1361,9 +1373,7 @@ export const EmuBayRailwayCompany: Game = {
           }
         }
       }
+      ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
     },
   },
-
-
-
 };
