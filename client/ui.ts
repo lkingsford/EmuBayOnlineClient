@@ -2,7 +2,8 @@ import { Ctx } from "boardgame.io";
 import { Client } from "boardgame.io/dist/types/packages/client";
 import {
     getMinimumBid, IEmuBayState, actions, ACTION_CUBE_LOCATION_ACTIONS, IBond, BuildMode,
-    ICoordinates, getMergableCompanies, CompanyType, stalemateAvailable, getAllowedBuildSpaces, getTakeResourceSpaces, EndGameReason, IEndgameState, activeEndGameConditions
+    ICoordinates, getMergableCompanies, CompanyType, stalemateAvailable, getAllowedBuildSpaces,
+    getTakeResourceSpaces, EndGameReason, IEndgameState, activeEndGameConditions, SoftPhase
 }
     from "../game/game";
 import { Board } from "../client/board";
@@ -240,7 +241,9 @@ export class Ui {
                 contentDiv?.append(this.takeResourcesStage(gamestate, ctx, client));
             }
 
-            let phase = ctx.phase;
+            // Change back to ctx.phase when the phase bug is fixed
+            // let phase = ctx.phase;
+            let phase = ["initialAuction", "auction", "normalPlay"][gamestate.softPhase!];
             if (phase == "auction" || phase == "initialAuction") {
                 let auctionH1 = document.createElement("h1");
                 auctionH1.innerText = "Auction"
