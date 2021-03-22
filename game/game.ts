@@ -73,6 +73,12 @@ export interface IEmuBayState {
   mineLocation?: ICoordinates | null;
   bonds: IBond[];
   toAct?: CompanyID;
+
+  // SoftPhase exists due to an issue with phase (https://github.com/boardgameio/boardgame.io/issues/923)
+  // Remove this group of fields when the bug is fixed (and it goes back to phase)
+  softPhase?: SoftPhase;
+  firstTurnOfPhase?: boolean;
+  firstPlayerOfPhase?: number;
 };
 
 export enum EndGameReason {
@@ -399,7 +405,7 @@ function companyAccessibleTrack(G: IEmuBayState, company: number): ICoordinates[
   // Annoying narrow
   let connectedNarrow: ICoordinates[] = []
   if (company < 3) {
-    connectedNarrow.push(...G.companies[company].independentsOwned.map((i)=>i.home!));
+    connectedNarrow.push(...G.companies[company].independentsOwned.map((i) => i.home!));
   } else {
     connectedNarrow.push(G.companies[company].home!);
   }
@@ -497,7 +503,7 @@ export function getAllowedBuildSpaces(G: IEmuBayState, buildmode: BuildMode, com
           relevantHomes = [G.companies[company].home!]
         } else {
           // Must have merged in. Need connection to one of its privates
-          relevantHomes = G.companies[company].independentsOwned!.map((i)=>i.home!);
+          relevantHomes = G.companies[company].independentsOwned!.map((i) => i.home!);
         }
 
         // This should be cached - a fair bit of repetition happening here.
@@ -612,138 +618,144 @@ export const InitialAuctionOrder = [CompanyID.LW, CompanyID.TMLC, CompanyID.EB, 
 
 const IndependentStartingRevenue = 3;
 
-function CompanyInitialState(): ICompany[] { return [
-  {
-    // EB
-    cash: 0,
-    trainsRemaining: 4,
-    narrowGaugeRemaining: 0,
-    resourcesHeld: 0,
-    currentRevenue: 1,
-    bonds: [],
-    sharesHeld: [],
-    sharesRemaining: 2,
-    reservedSharesRemaining: 4,
-    home: { x: 2, y: 3 },
-    independentsOwned: [],
-    companyType: CompanyType.Major,
-    open: true,
-    id: 0,
-  },
-  {
-    // TMLC
-    cash: 0,
-    trainsRemaining: 8,
-    narrowGaugeRemaining: 0,
-    resourcesHeld: 0,
-    currentRevenue: 2,
-    bonds: [],
-    sharesHeld: [],
-    sharesRemaining: 4,
-    reservedSharesRemaining: 0,
-    home: { x: 7, y: 3 },
-    independentsOwned: [],
-    companyType: CompanyType.Major,
-    open: true,
-    id: 1,
-  },
-  {
-    // LW
-    cash: 0,
-    trainsRemaining: 7,
-    narrowGaugeRemaining: 0,
-    resourcesHeld: 0,
-    currentRevenue: 2,
-    bonds: [],
-    sharesHeld: [],
-    sharesRemaining: 3,
-    reservedSharesRemaining: 0,
-    home: { x: 7, y: 3 },
-    independentsOwned: [],
-    companyType: CompanyType.Major,
-    open: true,
-    id: 2,
-  },
-  {
-    // GT
-    cash: 10,
-    trainsRemaining: 0,
-    narrowGaugeRemaining: 2,
-    resourcesHeld: 0,
-    currentRevenue: IndependentStartingRevenue,
-    bonds: [{ deferred: true, amount: 10, baseInterest: 3, interestDelta: 1 }],
-    sharesHeld: [],
-    sharesRemaining: 1,
-    reservedSharesRemaining: 0,
-    independentsOwned: [],
-    companyType: CompanyType.Minor,
-    open: true,
-    id: 3,
-  },
-  {
-    // MLM
-    cash: 15,
-    trainsRemaining: 0,
-    narrowGaugeRemaining: 3,
-    resourcesHeld: 0,
-    currentRevenue: IndependentStartingRevenue,
-    bonds: [{ deferred: true, amount: 15, baseInterest: 4, interestDelta: 1 }],
-    sharesHeld: [],
-    sharesRemaining: 1,
-    reservedSharesRemaining: 0,
-    independentsOwned: [],
-    companyType: CompanyType.Minor,
-    open: false,
-    id: 4,
-  },
-  {
-    // NED
-    cash: 15,
-    trainsRemaining: 0,
-    narrowGaugeRemaining: 3,
-    resourcesHeld: 0,
-    currentRevenue: IndependentStartingRevenue,
-    bonds: [{ deferred: true, amount: 15, baseInterest: 6, interestDelta: 1 }],
-    sharesHeld: [],
-    sharesRemaining: 1,
-    reservedSharesRemaining: 0,
-    independentsOwned: [],
-    companyType: CompanyType.Minor,
-    open: false,
-    id: 5,
-  },
-  {
-    // NMF
-    cash: 15,
-    trainsRemaining: 0,
-    narrowGaugeRemaining: 4,
-    resourcesHeld: 0,
-    currentRevenue: IndependentStartingRevenue,
-    bonds: [{ deferred: true, amount: 15, baseInterest: 7, interestDelta: 1 }],
-    sharesHeld: [],
-    sharesRemaining: 1,
-    reservedSharesRemaining: 0,
-    independentsOwned: [],
-    companyType: CompanyType.Minor,
-    open: false,
-    id: 6,
-  },
-] };
+function CompanyInitialState(): ICompany[] {
+  return [
+    {
+      // EB
+      cash: 0,
+      trainsRemaining: 4,
+      narrowGaugeRemaining: 0,
+      resourcesHeld: 0,
+      currentRevenue: 1,
+      bonds: [],
+      sharesHeld: [],
+      sharesRemaining: 2,
+      reservedSharesRemaining: 4,
+      home: { x: 2, y: 3 },
+      independentsOwned: [],
+      companyType: CompanyType.Major,
+      open: true,
+      id: 0,
+    },
+    {
+      // TMLC
+      cash: 0,
+      trainsRemaining: 8,
+      narrowGaugeRemaining: 0,
+      resourcesHeld: 0,
+      currentRevenue: 2,
+      bonds: [],
+      sharesHeld: [],
+      sharesRemaining: 4,
+      reservedSharesRemaining: 0,
+      home: { x: 7, y: 3 },
+      independentsOwned: [],
+      companyType: CompanyType.Major,
+      open: true,
+      id: 1,
+    },
+    {
+      // LW
+      cash: 0,
+      trainsRemaining: 7,
+      narrowGaugeRemaining: 0,
+      resourcesHeld: 0,
+      currentRevenue: 2,
+      bonds: [],
+      sharesHeld: [],
+      sharesRemaining: 3,
+      reservedSharesRemaining: 0,
+      home: { x: 7, y: 3 },
+      independentsOwned: [],
+      companyType: CompanyType.Major,
+      open: true,
+      id: 2,
+    },
+    {
+      // GT
+      cash: 10,
+      trainsRemaining: 0,
+      narrowGaugeRemaining: 2,
+      resourcesHeld: 0,
+      currentRevenue: IndependentStartingRevenue,
+      bonds: [{ deferred: true, amount: 10, baseInterest: 3, interestDelta: 1 }],
+      sharesHeld: [],
+      sharesRemaining: 1,
+      reservedSharesRemaining: 0,
+      independentsOwned: [],
+      companyType: CompanyType.Minor,
+      open: true,
+      id: 3,
+    },
+    {
+      // MLM
+      cash: 15,
+      trainsRemaining: 0,
+      narrowGaugeRemaining: 3,
+      resourcesHeld: 0,
+      currentRevenue: IndependentStartingRevenue,
+      bonds: [{ deferred: true, amount: 15, baseInterest: 4, interestDelta: 1 }],
+      sharesHeld: [],
+      sharesRemaining: 1,
+      reservedSharesRemaining: 0,
+      independentsOwned: [],
+      companyType: CompanyType.Minor,
+      open: false,
+      id: 4,
+    },
+    {
+      // NED
+      cash: 15,
+      trainsRemaining: 0,
+      narrowGaugeRemaining: 3,
+      resourcesHeld: 0,
+      currentRevenue: IndependentStartingRevenue,
+      bonds: [{ deferred: true, amount: 15, baseInterest: 6, interestDelta: 1 }],
+      sharesHeld: [],
+      sharesRemaining: 1,
+      reservedSharesRemaining: 0,
+      independentsOwned: [],
+      companyType: CompanyType.Minor,
+      open: false,
+      id: 5,
+    },
+    {
+      // NMF
+      cash: 15,
+      trainsRemaining: 0,
+      narrowGaugeRemaining: 4,
+      resourcesHeld: 0,
+      currentRevenue: IndependentStartingRevenue,
+      bonds: [{ deferred: true, amount: 15, baseInterest: 7, interestDelta: 1 }],
+      sharesHeld: [],
+      sharesRemaining: 1,
+      reservedSharesRemaining: 0,
+      independentsOwned: [],
+      companyType: CompanyType.Minor,
+      open: false,
+      id: 6,
+    },
+  ]
+};
 
-function initialAvailableBonds(): IBond[] { return [
-  { deferred: true, amount: 10, baseInterest: 6, interestDelta: 1 },
-  { deferred: true, amount: 20, baseInterest: 7, interestDelta: 2 },
-  { deferred: true, amount: 20, baseInterest: 8, interestDelta: 2 },
-  { deferred: true, amount: 30, baseInterest: 9, interestDelta: 2 },
-  { deferred: true, amount: 30, baseInterest: 10, interestDelta: 2 },
-] };
+function initialAvailableBonds(): IBond[] {
+  return [
+    { deferred: true, amount: 10, baseInterest: 6, interestDelta: 1 },
+    { deferred: true, amount: 20, baseInterest: 7, interestDelta: 2 },
+    { deferred: true, amount: 20, baseInterest: 8, interestDelta: 2 },
+    { deferred: true, amount: 30, baseInterest: 9, interestDelta: 2 },
+    { deferred: true, amount: 30, baseInterest: 10, interestDelta: 2 },
+  ]
+};
 
 // Bonds that are randomly given to the 3 companies
-function startingBonds(): IBond[] { return [
-  { deferred: true, amount: 0, baseInterest: 0, interestDelta: 0 },
-  { deferred: true, amount: 10, baseInterest: 5, interestDelta: 1 },
-  { deferred: true, amount: 15, baseInterest: 5, interestDelta: 2 },
-] };
+function startingBonds(): IBond[] {
+  return [
+    { deferred: true, amount: 0, baseInterest: 0, interestDelta: 0 },
+    { deferred: true, amount: 10, baseInterest: 5, interestDelta: 1 },
+    { deferred: true, amount: 15, baseInterest: 5, interestDelta: 2 },
+  ]
+};
 
 const SETUP_CARDS = [
   // C N NE SE S SW NW
@@ -870,13 +882,13 @@ export function activeEndGameConditions(G: IEmuBayState): EndGameReason[] {
   var majorsWithoutTrack = G.companies.filter((i) => i.companyType == CompanyType.Major)
     .filter((i) => (i.trainsRemaining + i.narrowGaugeRemaining) == 0)
     .length;
-  var minorHasNoTrack = G.companies.filter((i)=>i.companyType == CompanyType.Minor)
-  .reduce<number>((last, i)=>last + i.narrowGaugeRemaining, 0) == 0;
+  var minorHasNoTrack = G.companies.filter((i) => i.companyType == CompanyType.Minor)
+    .reduce<number>((last, i) => last + i.narrowGaugeRemaining, 0) == 0;
   var chartersWithoutTrack = majorsWithoutTrack + (minorHasNoTrack ? 1 : 0);
   if (chartersWithoutTrack >= 3) {
     reasons.push(EndGameReason.track);
   }
-  
+
   if (G.resourceCubes.length <= 3) {
     reasons.push(EndGameReason.resource);
   }
@@ -884,6 +896,62 @@ export function activeEndGameConditions(G: IEmuBayState): EndGameReason[] {
   return reasons;
 }
 
+function StartPhase(phase: SoftPhase, G: IEmuBayState, ctx: Ctx) {
+  // This should be removed when the boardgame.io phase bug is fixed
+  G.softPhase = phase;
+  G.firstTurnOfPhase = true;
+  switch (phase) {
+    case SoftPhase.InitialAuction:
+      G.companyForAuction = CompanyID.LW;
+      G.passed = new Array(ctx.numPlayers).fill(false);
+      G.currentBid = 0;
+      G.winningBidder = 0;
+      G.auctionFinished = false;
+      G.firstPlayerOfPhase = Math.floor(ctx.random!.Number() * ctx.numPlayers);
+      break;
+    case SoftPhase.NormalPlay:
+      break;
+    case SoftPhase.Auction:
+      break;
+  }
+}
+
+function TurnNext(G: IEmuBayState, ctx: Ctx): number {
+  // This should be removed when the boardgame.io phase bug is fixed
+  if (G.firstTurnOfPhase) {
+    return G.firstPlayerOfPhase!;
+  }
+
+  switch (G.softPhase) {
+    case SoftPhase.InitialAuction:
+      {
+        if (!G.auctionFinished) {
+          let nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
+          while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
+            console.log("next player pos", nextPlayerPos);
+            nextPlayerPos = (nextPlayerPos + 1) % ctx.numPlayers;
+            console.log("after next player pos", nextPlayerPos);
+          }
+          return nextPlayerPos;
+        }
+        else {
+          // For some reason, boardgame.io still runs this after phase change - 
+          // so go to the sensible thing that it will need next
+          return ctx.playOrder.indexOf(G.playerAfterAuction!.toString());
+        }
+      }
+    case SoftPhase.NormalPlay:
+      break;
+    case SoftPhase.Auction:
+      break;
+  }
+}
+
+enum SoftPhase {
+  InitialAuction,
+  NormalPlay,
+  Auction
+}
 
 export const EmuBayRailwayCompany = {
   name: GAME_ID,
@@ -936,7 +1004,7 @@ export const EmuBayRailwayCompany = {
       });
     });
 
-    return {
+    let G: IEmuBayState = {
       players: [...new Array(ctx.numPlayers)].map((): IPlayer => ({
         cash: Math.ceil(STARTING_CASH / ctx.numPlayers)
       })),
@@ -949,55 +1017,44 @@ export const EmuBayRailwayCompany = {
       track: track,
       bonds: initialAvailableBonds(),
     }
+
+    StartPhase(SoftPhase.InitialAuction, G, ctx);
+
+    return G;
+  },
+
+  turn: {
+    order: {
+      next: TurnNext
+    }
+  },
+
+  moves: {
+    makeBid: (G: IEmuBayState, ctx: Ctx, amount: number) => {
+      if (G.softPhase != SoftPhase.InitialAuction) {
+        // Remove after phase bug fixed
+        return INVALID_MOVE;
+      }
+
+      if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
+        G.winningBidder = +ctx.currentPlayer;
+        G.currentBid = amount;
+        var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
+        if (biddersRemaining == 1) {
+          initialAuctionCompanyWon(G, ctx);
+        }
+        ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
+      }
+      else {
+        return INVALID_MOVE;
+      }
+    },
   },
 
   phases: {
     initialAuction: {
-      start: true,
-      onBegin: (G: IEmuBayState, ctx: Ctx) => {
-        G.companyForAuction = CompanyID.LW;
-        G.passed = new Array(ctx.numPlayers).fill(false);
-        G.currentBid = 0;
-        G.winningBidder = 0;
-        G.auctionFinished = false;
-      },
-      turn: {
-        moveLimit: 1,
-        order: {
-          first: (G: IEmuBayState, ctx: Ctx) => Math.floor(ctx.random!.Number() * ctx.numPlayers),
-          next: (G: IEmuBayState, ctx: Ctx) => {
-            var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-            if (!G.auctionFinished) {
-              let nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
-              while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
-                console.log("next player pos", nextPlayerPos);
-                nextPlayerPos = (nextPlayerPos + 1) % ctx.numPlayers;
-                console.log("after next player pos", nextPlayerPos);
-              }
-              return nextPlayerPos;
-            }
-            else {
-              // For some reason, boardgame.io still runs this after phase change - 
-              // so go to the sensible thing that it will need next
-              return ctx.playOrder.indexOf(G.playerAfterAuction!.toString());
-            }
-          }
-        }
-      },
       moves: {
-        makeBid: (G: IEmuBayState, ctx: Ctx, amount: number) => {
-          if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
-            G.winningBidder = +ctx.currentPlayer;
-            G.currentBid = amount;
-            var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-            if (biddersRemaining == 1) {
-              initialAuctionCompanyWon(G, ctx);
-            }
-          }
-          else {
-            return INVALID_MOVE;
-          }
-        },
+
         pass: (G: IEmuBayState, ctx: Ctx) => {
           G.passed![+ctx.currentPlayer] = true;
           var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
