@@ -132,9 +132,16 @@ export class EmuBayRailwayCompanyClient {
         this.client.log.forEach((i: any) => {
             const { action, automatic } = i;
             // ignore automatic log entries - in example code, but not including until known to be necessary
-            state = reducer(state, action);
+            if (!automatic) {
+                state = reducer(state, action);
+            }
             stateSnapshots.push({ state: state, automatic: automatic, ctx: state.ctx });
         });
+
+        console.log("stateSnapshots");
+        console.log(stateSnapshots);
+        console.log("Log");
+        console.log(this.client.log);
 
         return stateSnapshots;
     }
