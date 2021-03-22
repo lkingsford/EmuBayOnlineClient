@@ -1129,7 +1129,7 @@ export const EmuBayRailwayCompany: Game = {
 
             G.playerInitialBidder = +ctx.currentPlayer;
 
-            ctx.events?.setPhase!("auction");
+            StartPhase(SoftPhase.Auction, G, ctx);
           },
 
           issueBond: (G: IEmuBayState, ctx: Ctx, company: number, bond: number) => {
@@ -1363,6 +1363,7 @@ export const EmuBayRailwayCompany: Game = {
 
       G.passed![+ctx.currentPlayer] = true;
       var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
+      ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
       if (biddersRemaining <= 1) {
         if (G.currentBid != 0 || biddersRemaining == 0) {
           // All other players passed and bid made, or all players passed
@@ -1373,7 +1374,6 @@ export const EmuBayRailwayCompany: Game = {
           }
         }
       }
-      ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
     },
   },
 };

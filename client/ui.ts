@@ -243,7 +243,7 @@ export class Ui {
 
             // Change back to ctx.phase when the phase bug is fixed
             // let phase = ctx.phase;
-            let phase = ["initialAuction", "auction", "normalPlay"][gamestate.softPhase!];
+            let phase = ["initialAuction", "normalPlay", "auction"][gamestate.softPhase!];
             if (phase == "auction" || phase == "initialAuction") {
                 let auctionH1 = document.createElement("h1");
                 auctionH1.innerText = "Auction"
