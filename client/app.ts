@@ -122,7 +122,7 @@ export class EmuBayRailwayCompanyClient {
     }
 
     private GetStateHistory(): IHistoricState[] {
-        const reducer = CreateGameReducer({ game: EmuBayRailwayCompany });
+        const reducer = CreateGameReducer({ game: EmuBayRailwayCompany, isClient: false });
         const stateSnapshots: IHistoricState[] = [];
         let state: State<IEmuBayState> = this.client.initialState;
 
@@ -132,8 +132,10 @@ export class EmuBayRailwayCompanyClient {
         this.client.log.forEach((i: any) => {
             const { action, automatic } = i;
             // ignore automatic log entries - in example code, but not including until known to be necessary
-            state = reducer(state, action);
-            stateSnapshots.push({ state: state, automatic: automatic, ctx: state.ctx });
+            if (!automatic) {
+                state = reducer(state, action);
+                stateSnapshots.push({ state: state, automatic: automatic, ctx: state.ctx });
+            }
         });
 
         return stateSnapshots;
