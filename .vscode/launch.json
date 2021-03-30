@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "pwa-chrome",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
             "command": "npm run-script run",
             "name": "Run serve",
             "request": "launch",
@@ -13,6 +20,7 @@
                 "${workspaceFolder}/dist/**/*.js",
                 "!**/node_modules/**"
             ]
-        }
+        },
+
     ]
 }
