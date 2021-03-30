@@ -64,7 +64,7 @@ export interface IEmuBayState {
   winningBidder?: number;
   companyForAuction?: CompanyID;
   passed?: boolean[];
-  playerAfterAuction?: number;
+  playerAfterPhase?: number;
   playerInitialBidder?: number;
   auctionFinished?: boolean;
   anyActionsTaken?: boolean;
@@ -74,6 +74,9 @@ export interface IEmuBayState {
   bonds: IBond[];
   toAct?: CompanyID;
   pseudoStage?: PseudoStage | null;
+  pseudoPhase?: PseudoPhase;
+  firstTurnOfPhase?: boolean;
+  firstPlayerOfPhase?: number;
 };
 
 export enum PseudoStage {
@@ -81,6 +84,12 @@ export enum PseudoStage {
   takeAction,
   buildingTrack,
   takeResources
+}
+
+export enum PseudoPhase {
+  InitialAuction,
+  NormalPlay,
+  Auction
 }
 
 export enum EndGameReason {
@@ -326,9 +335,9 @@ function initialAuctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
     ctx.events!.endTurn!({ next: G.winningBidder });
     return;
   }
-  G.playerAfterAuction = G.companies[CompanyID.GT].sharesHeld[0];
+  G.playerAfterPhase = G.companies[CompanyID.GT].sharesHeld[0];
   G.auctionFinished = true;
-  ctx.events!.setPhase!('normalPlay');
+  StartPhase(PseudoPhase.NormalPlay, G, ctx);
 }
 
 // More copy paste than there should be
@@ -343,8 +352,8 @@ function auctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
   if (G.companies[G.companyForAuction!].companyType == CompanyType.Minor) {
     G.independentOrder.splice(0, 1);
   }
-  ctx.events!.setPhase!('normalPlay');
-  ctx.events!.endTurn!({ next: G.playerAfterAuction });
+  StartPhase(PseudoPhase.NormalPlay, G, ctx);
+  ctx.events!.endTurn!({ next: G.playerAfterPhase });
 }
 
 function jiggleCubes(G: IEmuBayState, actionToTake: actions): string | void {
@@ -898,6 +907,86 @@ export function activeEndGameConditions(G: IEmuBayState): EndGameReason[] {
   return reasons;
 }
 
+function StartPhase(phase: PseudoPhase, G: IEmuBayState, ctx: Ctx) {
+  // This should be removed when the boardgame.io phase bug is fixed
+  G.pseudoPhase = phase;
+  G.firstTurnOfPhase = true;
+  switch (phase) {
+    case PseudoPhase.InitialAuction:
+      G.companyForAuction = CompanyID.LW;
+      G.passed = new Array(ctx.numPlayers).fill(false);
+      G.currentBid = 0;
+      G.winningBidder = 0;
+      G.auctionFinished = false;
+      G.firstPlayerOfPhase = Math.floor(ctx.random!.Number() * ctx.numPlayers);
+      break;
+
+    case PseudoPhase.NormalPlay:
+      G.firstPlayerOfPhase = ctx.playOrder.indexOf(G.playerAfterPhase!.toString());
+      G.pseudoStage = PseudoStage.removeCube;
+      G.anyActionsTaken = false;
+      break;
+
+    case PseudoPhase.Auction:
+      G.passed = new Array(ctx.numPlayers).fill(false);
+      G.currentBid = 0;
+      G.winningBidder = 0;
+      G.auctionFinished = false;
+      G.firstPlayerOfPhase = G.playerInitialBidder!;
+      break;
+  }
+}
+
+function TurnNext(G: IEmuBayState, ctx: Ctx): number {
+  // This should be removed when the boardgame.io phase bug is fixed
+  if (G.firstTurnOfPhase) {
+    return G.firstPlayerOfPhase!;
+  }
+  switch (G.pseudoPhase) {
+    case PseudoPhase.InitialAuction:
+      {
+        if (!G.auctionFinished) {
+          let nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
+          while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
+            console.log("next player pos", nextPlayerPos);
+            nextPlayerPos = (nextPlayerPos + 1) % ctx.numPlayers;
+            console.log("after next player pos", nextPlayerPos);
+          }
+          return nextPlayerPos;
+        }
+        else {
+          // For some reason, boardgame.io still runs this after phase change - 
+          // so go to the sensible thing that it will need next
+          return ctx.playOrder.indexOf(G.playerAfterPhase!.toString());
+        }
+      }
+
+    case PseudoPhase.NormalPlay:
+      switch (G.pseudoStage) {
+        case PseudoStage.buildingTrack:
+        case PseudoStage.takeResources:
+          return ctx.playOrderPos;
+        default:
+          return (ctx.playOrderPos + 1) % ctx.numPlayers;
+      }
+
+    case PseudoPhase.Auction:
+      if (!G.auctionFinished) {
+        var nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
+        while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
+          nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
+        }
+        return nextPlayerPos;
+      }
+      else {
+        // For some reason, boardgame.io still runs this after phase change - 
+        // so go to the sensible thing that it will need next
+        return ctx.playOrder.indexOf(G.playerAfterPhase!.toString());
+      }
+  }
+  // Should never hit
+  throw Error(`Invalid TurnNext soft phase ${G.pseudoPhase}`);
+}
 
 export const EmuBayRailwayCompany = {
   name: GAME_ID,
@@ -950,7 +1039,7 @@ export const EmuBayRailwayCompany = {
       });
     });
 
-    return {
+    let G: IEmuBayState = {
       players: [...new Array(ctx.numPlayers)].map((): IPlayer => ({
         cash: Math.ceil(STARTING_CASH / ctx.numPlayers)
       })),
@@ -961,430 +1050,364 @@ export const EmuBayRailwayCompany = {
       // GT Excluded because in initial auction already
       independentOrder: [CompanyID.MLM, CompanyID.NED, CompanyID.NMF],
       track: track,
-      bonds: initialAvailableBonds(),
-    }
+      bonds: initialAvailableBonds()
+    };
+
+    StartPhase(PseudoPhase.InitialAuction, G, ctx);
+
+    return G;
   },
 
-  phases: {
-    initialAuction: {
-      start: true,
-      onBegin: (G: IEmuBayState, ctx: Ctx) => {
-        G.companyForAuction = CompanyID.LW;
-        G.passed = new Array(ctx.numPlayers).fill(false);
-        G.currentBid = 0;
-        G.winningBidder = 0;
-        G.auctionFinished = false;
-      },
+  turn: {
+    order: {
+      first: (G: IEmuBayState, ctx: Ctx) => Math.floor(ctx.random!.Number() * ctx.numPlayers),
+      next: TurnNext
+    },
+  },
 
-      turn: {
-        moveLimit: 1,
-        order: {
-          first: (G: IEmuBayState, ctx: Ctx) => Math.floor(ctx.random!.Number() * ctx.numPlayers),
-          next: (G: IEmuBayState, ctx: Ctx) => {
-            var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-            if (!G.auctionFinished) {
-              let nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
-              while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
-                console.log("next player pos", nextPlayerPos);
-                nextPlayerPos = (nextPlayerPos + 1) % ctx.numPlayers;
-                console.log("after next player pos", nextPlayerPos);
-              }
-              return nextPlayerPos;
-            }
-            else {
-              // For some reason, boardgame.io still runs this after phase change - 
-              // so go to the sensible thing that it will need next
-              return ctx.playOrder.indexOf(G.playerAfterAuction!.toString());
-            }
-          }
-        }
-      },
+  moves: {
+    removeCube: (G: IEmuBayState, ctx: Ctx, action: actions) => {
+      if (G.pseudoStage != PseudoStage.removeCube) {
+        return INVALID_MOVE;
+      }
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+      let filledSpaces =
+        ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
+          .filter(v => v.value == action)
+          .filter(v => G.actionCubeLocations[v.idx] == true);
+      let filledSpaceCount = filledSpaces.length;
+      if (filledSpaceCount == 0) {
+        console.log("No cube to remove")
+        return INVALID_MOVE;
+      }
 
-      moves: {
-        makeBid: (G: IEmuBayState, ctx: Ctx, amount: number) => {
-          if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
-            G.winningBidder = +ctx.currentPlayer;
-            G.currentBid = amount;
-            var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-            if (biddersRemaining == 1) {
-              initialAuctionCompanyWon(G, ctx);
-            }
-          }
-          else {
-            return INVALID_MOVE;
-          }
-        },
-        
-        pass: (G: IEmuBayState, ctx: Ctx) => {
-          G.passed![+ctx.currentPlayer] = true;
-          var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-          if (biddersRemaining <= 1) {
-            if (G.currentBid != 0 || biddersRemaining == 0) {
-              // All other players passed and bid made, or all players passed
-              initialAuctionCompanyWon(G, ctx);
-            }
-          }
-        },
-      },
+      // Remove a cube to place
+      G.actionCubeTakenFrom = action;
+      G.actionCubeLocations[filledSpaces[0].idx] = false;
+      G.pseudoStage = PseudoStage.takeAction;
     },
 
-    normalPlay: {
-      turn: {
-        order: {
-          first: (G: IEmuBayState, ctx: Ctx) => {
-            var first = ctx.playOrder.indexOf(G.playerAfterAuction!.toString())
-            return first;
-          },
-          next: (G: IEmuBayState, ctx: Ctx) => (ctx.playOrderPos + 1) % ctx.numPlayers
-        },
-        onBegin: (G: IEmuBayState, ctx: Ctx) => {
-          G.pseudoStage = PseudoStage.removeCube;
-          G.anyActionsTaken = false;
-        },
-      },
+    declareStalemate: (G: IEmuBayState, ctx: Ctx) => {
+      if (stalemateAvailable(G, ctx)) {
+        ctx.events!.endGame!(getEndgameState(G, [EndGameReason.stalemate]));
+      }
+      var availableSpaces = ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
+        .filter(v => G.actionCubeLocations[v.idx] == false);
+    },
 
-      moves: {
-        removeCube: (G: IEmuBayState, ctx: Ctx, action: actions) => {
-          if (G.pseudoStage != PseudoStage.removeCube) {
-            return INVALID_MOVE;
-          }
+    buildTrackAction: (G: IEmuBayState, ctx: Ctx, company: number) => {
+      if (G.pseudoStage != PseudoStage.takeAction) {
+        return INVALID_MOVE;
+      };
+      if (jiggleCubes(G, actions.BuildTrack) == INVALID_MOVE) {
+        return INVALID_MOVE;
+      };
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+      ctx.events?.endTurn!();
+      G.toAct = company;
+      G.buildsRemaining = 3;
+      G.anyActionsTaken = false;
+      G.playerAfterPhase = (ctx.playOrderPos + 1) % ctx.numPlayers;
+      G.pseudoStage = PseudoStage.buildingTrack;
+    },
 
-          let filledSpaces =
-            ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
-              .filter(v => v.value == action)
-              .filter(v => G.actionCubeLocations[v.idx] == true);
-          let filledSpaceCount = filledSpaces.length;
-          if (filledSpaceCount == 0) {
-            console.log("No cube to remove")
-            return INVALID_MOVE;
-          }
-          // Remove a cube to place
-          G.actionCubeTakenFrom = action;
-          G.actionCubeLocations[filledSpaces[0].idx] = false;
-          G.pseudoStage = PseudoStage.takeAction;
-        },
+    mineResource: (G: IEmuBayState, ctx: Ctx, company: number) => {
+      if (G.pseudoStage != PseudoStage.takeAction) {
+        return INVALID_MOVE;
+      };
+      if (jiggleCubes(G, actions.TakeResources) == INVALID_MOVE) {
+        return INVALID_MOVE;
+      };
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+      G.toAct = company;
+      G.mineLocation = null;
+      G.playerAfterPhase = (ctx.playOrderPos + 1) % ctx.numPlayers;
+      G.pseudoStage = PseudoStage.takeResources;
+    },
 
-        declareStalemate: (G: IEmuBayState, ctx: Ctx) => {
-          if (stalemateAvailable(G, ctx)) {
-            ctx.events!.endGame!(getEndgameState(G, [EndGameReason.stalemate]));
-          }
-          var availableSpaces = ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
-            .filter(v => G.actionCubeLocations[v.idx] == false);
-        },
+    auctionShare: (G: IEmuBayState, ctx: Ctx, company: number) => {
+      if (G.pseudoStage != PseudoStage.takeAction) {
+        return INVALID_MOVE;
+      };
+      if (jiggleCubes(G, actions.AuctionShare) == INVALID_MOVE) {
+        return INVALID_MOVE;
+      };
+      G.playerAfterPhase = (ctx.playOrderPos + 1) % ctx.numPlayers;
+      G.companyForAuction = company;
+      if (G.players[+ctx.currentPlayer].cash < getMinimumBid(G, company)) {
+        console.log("Player must be able to pay minimum bid");
+        return INVALID_MOVE;
+      }
+      if (G.companies[company].sharesRemaining <= 0) {
+        console.log("No shares remaining");
+        return INVALID_MOVE;
+      }
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+      // Check that it's the next independent available if it's independent
+      if (G.companies[company].companyType == CompanyType.Minor) {
+        if ((G.independentOrder.length == 0) || (company != G.independentOrder[0])) {
+          console.log("Independent not available");
+          return INVALID_MOVE;
+        }
+      }
 
-        buildTrackAction: (G: IEmuBayState, ctx: Ctx, company: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.BuildTrack) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          G.toAct = company;
-          G.buildsRemaining = 3;
-          G.anyActionsTaken = false;
-          G.pseudoStage = PseudoStage.buildingTrack;
-        },
+      G.playerInitialBidder = +ctx.currentPlayer;
 
-        mineResource: (G: IEmuBayState, ctx: Ctx, company: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.TakeResources) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          G.toAct = company;
-          G.mineLocation = null;
-          G.pseudoStage = PseudoStage.takeResources;
-        },
+      StartPhase(PseudoPhase.Auction, G, ctx);
+    },
 
-        auctionShare: (G: IEmuBayState, ctx: Ctx, company: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.AuctionShare) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          G.playerAfterAuction = (ctx.playOrderPos + 1) % ctx.numPlayers;
-          G.companyForAuction = company;
-          if (G.players[+ctx.currentPlayer].cash < getMinimumBid(G, company)) {
-            console.log("Player must be able to pay minimum bid");
-            return INVALID_MOVE;
-          }
-          if (G.companies[company].sharesRemaining <= 0) {
-            console.log("No shares remaining");
-            return INVALID_MOVE;
-          }
-          // Check that it's the next independent available if it's independent
-          if (G.companies[company].companyType == CompanyType.Minor) {
-            if ((G.independentOrder.length == 0) || (company != G.independentOrder[0])) {
-              console.log("Independent not available");
-            }
-          }
+    issueBond: (G: IEmuBayState, ctx: Ctx, company: number, bond: number) => {
+      if (G.pseudoStage != PseudoStage.takeAction) {
+        return INVALID_MOVE;
+      };
+      if (jiggleCubes(G, actions.IssueBond) == INVALID_MOVE) {
+        return INVALID_MOVE;
+      };
 
-          G.playerInitialBidder = +ctx.currentPlayer;
+      G.companies[company].bonds.push(G.bonds[bond]);
+      G.companies[company].cash += G.bonds[bond].amount;
+      G.bonds.splice(bond, 1);
+      G.firstTurnOfPhase = false; // Remove after phase bug fixe
+      ctx.events?.endTurn!();
+    },
 
-          ctx.events?.setPhase!("auction");
-        },
+    merge: (G: IEmuBayState, ctx: Ctx, major: number, minor: number) => {
+      if (G.pseudoStage != PseudoStage.takeAction) {
+        return INVALID_MOVE;
+      };
+      if (jiggleCubes(G, actions.Merge) == INVALID_MOVE) {
+        return INVALID_MOVE;
+      };
 
-        issueBond: (G: IEmuBayState, ctx: Ctx, company: number, bond: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.IssueBond) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
+      if (getMergableCompanies(G, ctx).find((i) => i.major == major && i.minor == minor) == undefined) {
+        console.log("Merge is invalid")
+        return INVALID_MOVE;
+      }
 
-          G.companies[company].bonds.push(G.bonds[bond]);
-          G.companies[company].cash += G.bonds[bond].amount;
-          G.bonds.splice(bond, 1);
-          ctx.events?.endTurn!();
-        },
+      // Exchange shares
+      G.companies[major].sharesHeld.push(G.companies[minor].sharesHeld[0]);
+      G.companies[minor].sharesHeld = [];
+      if (G.companies[major].reservedSharesRemaining > 0) {
+        G.companies[major].reservedSharesRemaining -= 1;
+      } else {
+        G.companies[major].sharesRemaining -= 1;
+        // Special rule for Emu Bay: When any other company is merged in,
+        // EB reserved share becomes regular share
+        G.companies[CompanyID.EB].sharesRemaining += 1;
+        G.companies[CompanyID.EB].reservedSharesRemaining -= 1;
+      }
 
-        merge: (G: IEmuBayState, ctx: Ctx, major: number, minor: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.Merge) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
+      // Merge stuff in
+      G.companies[major].bonds.push(...G.companies[minor].bonds);
+      G.companies[major].cash += G.companies[minor].cash;
+      G.companies[major].currentRevenue += G.companies[minor].currentRevenue;
+      G.companies[major].resourcesHeld += G.companies[minor].resourcesHeld;
+      G.companies[major].narrowGaugeRemaining += G.companies[minor].narrowGaugeRemaining;
+      G.companies[major].independentsOwned.push(G.companies[minor]);
 
-          if (getMergableCompanies(G, ctx).find((i) => i.major == major && i.minor == minor) == undefined) {
-            console.log("Merge is invalid")
-            return INVALID_MOVE;
-          }
+      // Close minor
+      G.companies[minor].open = false;
+      G.firstTurnOfPhase = false; // Remove after phase bug fixe
+      ctx.events?.endTurn!();
+    },
 
-          // Exchange shares
-          G.companies[major].sharesHeld.push(G.companies[minor].sharesHeld[0]);
-          G.companies[minor].sharesHeld = [];
-          if (G.companies[major].reservedSharesRemaining > 0) {
-            G.companies[major].reservedSharesRemaining -= 1;
+    payDividends: (G: IEmuBayState, ctx: Ctx) => {
+      if (G.pseudoStage != PseudoStage.takeAction) {
+        return INVALID_MOVE;
+      };
+      if (jiggleCubes(G, actions.PayDividend) == INVALID_MOVE) {
+        return INVALID_MOVE;
+      };
+      // Pay dividends
+      G.companies.forEach((co) => {
+        let amount = co.currentRevenue > 0 ? Math.ceil(co.currentRevenue / co.sharesHeld.length) : Math.floor(co.currentRevenue / co.sharesHeld.length);
+        co.sharesHeld.forEach((n) => {
+          G.players[n].cash += amount;
+          console.log(n, " payed ", amount, "for", co)
+        });
+
+        // Adjust non-deferred debt
+        let debtChange = co.bonds.filter((i) => !i.deferred).reduce<number>((p, i) => i.interestDelta + p, 0)
+        co.currentRevenue -= debtChange;
+        console.log(co, " revenue reduced by ", debtChange)
+
+        // Increase debt for each deferred
+        co.bonds.filter((i) => i.deferred).forEach((i) => {
+          co.currentRevenue -= i.baseInterest;
+          console.log(co, " revenue reduced by ", i.baseInterest, " following undefferal")
+          i.deferred = false;
+        });
+      })
+
+      // Check for bankruptcy
+      if (G.players.some((i) => i.cash < 0)) {
+        ctx.events?.endGame!(getEndgameState(G, [EndGameReason.bankruptcy]));
+      }
+
+      // Check for other end game conditions
+      let reasons: EndGameReason[] = activeEndGameConditions(G);
+      if (reasons.length >= 2) {
+        ctx.events?.endGame!(getEndgameState(G, reasons));
+      }
+      G.firstTurnOfPhase = false; // Remove after phase bug fixe
+      ctx.events?.endTurn!();
+    },
+
+    buildTrack: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates, buildMode: BuildMode) => {
+      // Must have track remaining
+      if (G.pseudoStage != PseudoStage.buildingTrack) {
+        return INVALID_MOVE;
+      };
+      if (buildMode == BuildMode.Normal) {
+        if (G.companies[G.toAct!].trainsRemaining == 0) {
+          return INVALID_MOVE;
+        }
+      } else {
+        if (G.companies[G.toAct!].narrowGaugeRemaining == 0) {
+          return INVALID_MOVE;
+        }
+      }
+
+      // Must have build remaining
+      if (G.buildsRemaining! <= 0) {
+        return INVALID_MOVE;
+      }
+
+      // Must be in permitted space
+      let allowed = getAllowedBuildSpaces(G, buildMode, G.toAct!);
+      let thisSpace = allowed.find((i) => i.x == xy.x && i.y == xy.y);
+      if (!thisSpace) {
+        return INVALID_MOVE;
+      };
+
+      if (G.companies[G.toAct!].cash < thisSpace.cost) {
+        return INVALID_MOVE;
+      }
+      G.companies[G.toAct!].cash -= thisSpace.cost;
+      G.companies[G.toAct!].currentRevenue += thisSpace.rev;
+
+      G.track.push({
+        x: xy.x,
+        y: xy.y,
+        narrow: buildMode == BuildMode.Narrow,
+        owner: buildMode == BuildMode.Normal ? G.toAct! : undefined
+      });
+      if (buildMode == BuildMode.Normal) {
+        G.companies[G.toAct!].trainsRemaining -= 1;
+      }
+      else {
+        G.companies[G.toAct!].narrowGaugeRemaining -= 1;
+      }
+      G.anyActionsTaken = true;
+      G.buildsRemaining! -= 1;
+    },
+
+    doneBuilding: (G: IEmuBayState, ctx: Ctx) => {
+      if (G.pseudoStage != PseudoStage.buildingTrack) {
+        return INVALID_MOVE;
+      };
+      if (!G.anyActionsTaken) {
+        console.log("No track built - can't pass");
+        return INVALID_MOVE;
+      }
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+      StartPhase(PseudoPhase.NormalPlay, G, ctx);
+      ctx.events?.endTurn!();
+    },
+
+    takeResource: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates) => {
+      if (G.pseudoStage != PseudoStage.takeResources) {
+        return INVALID_MOVE;
+      };
+      if (!getTakeResourceSpaces(G, G.toAct!).find((i) => i.x == xy.x && i.y == xy.y)) {
+        console.log("Can't take from location");
+        return INVALID_MOVE;
+      }
+
+      // Remove resource cube from space
+      G.resourceCubes.splice(
+        G.resourceCubes.findIndex((i) => i.x == xy.x && i.y == xy.y), 1
+      )
+
+      G.mineLocation = xy;
+
+      // Pay to remove resource cube
+      let co = G.companies[G.toAct!];
+      co.cash -= resourceCubeCost(G);
+
+      // Increase revenue
+      co.currentRevenue += resourceCubeRevenue(G, G.toAct!);
+
+      co.resourcesHeld += 1;
+
+      G.anyActionsTaken = true;
+    },
+
+    doneTaking: (G: IEmuBayState, ctx: Ctx) => {
+      if (G.pseudoStage != PseudoStage.takeResources) {
+        return INVALID_MOVE;
+      };
+      if (!G.anyActionsTaken) {
+        console.log("No resources taken - can't pass");
+        return INVALID_MOVE;
+      }
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+      StartPhase(PseudoPhase.NormalPlay, G, ctx);
+      ctx.events?.endTurn!();
+    },
+
+    makeBid: (G: IEmuBayState, ctx: Ctx, amount: number) => {
+      if (G.pseudoPhase != PseudoPhase.InitialAuction && G.pseudoPhase != PseudoPhase.Auction) {
+        // Remove after phase bug fixed
+        return INVALID_MOVE;
+      }
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+
+      if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
+        G.winningBidder = +ctx.currentPlayer;
+        G.currentBid = amount;
+        var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
+        if (biddersRemaining == 1) {
+          if (G.pseudoPhase == PseudoPhase.InitialAuction) {
+            initialAuctionCompanyWon(G, ctx);
           } else {
-            G.companies[major].sharesRemaining -= 1;
-            // Special rule for Emu Bay: When any other company is merged in,
-            // EB reserved share becomes regular share
-            G.companies[CompanyID.EB].sharesRemaining += 1;
-            G.companies[CompanyID.EB].reservedSharesRemaining -= 1;
-          }
-
-          // Merge stuff in
-          G.companies[major].bonds.push(...G.companies[minor].bonds);
-          G.companies[major].cash += G.companies[minor].cash;
-          G.companies[major].currentRevenue += G.companies[minor].currentRevenue;
-          G.companies[major].resourcesHeld += G.companies[minor].resourcesHeld;
-          G.companies[major].narrowGaugeRemaining += G.companies[minor].narrowGaugeRemaining;
-          G.companies[major].independentsOwned.push(G.companies[minor]);
-
-          // Close minor
-          G.companies[minor].open = false;
-
-          ctx.events?.endTurn!();
-        },
-
-        payDividends: (G: IEmuBayState, ctx: Ctx) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.PayDividend) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          // Pay dividends
-          G.companies.forEach((co) => {
-            let amount = co.currentRevenue > 0 ? Math.ceil(co.currentRevenue / co.sharesHeld.length) : Math.floor(co.currentRevenue / co.sharesHeld.length);
-            co.sharesHeld.forEach((n) => {
-              G.players[n].cash += amount;
-              console.log(n, " payed ", amount, "for", co)
-            });
-
-            // Adjust non-deferred debt
-            let debtChange = co.bonds.filter((i) => !i.deferred).reduce<number>((p, i) => i.interestDelta + p, 0)
-            co.currentRevenue -= debtChange;
-            console.log(co, " revenue reduced by ", debtChange)
-
-            // Increase debt for each deferred
-            co.bonds.filter((i) => i.deferred).forEach((i) => {
-              co.currentRevenue -= i.baseInterest;
-              console.log(co, " revenue reduced by ", i.baseInterest, " following undefferal")
-              i.deferred = false;
-            });
-          })
-
-          // Check for bankruptcy
-          if (G.players.some((i) => i.cash < 0)) {
-            ctx.events?.endGame!(getEndgameState(G, [EndGameReason.bankruptcy]));
-          }
-
-          // Check for other end game conditions
-          let reasons: EndGameReason[] = activeEndGameConditions(G);
-          if (reasons.length >= 2) {
-            ctx.events?.endGame!(getEndgameState(G, reasons));
-          }
-
-          ctx.events?.endTurn!();
-        },
-
-        buildTrack: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates, buildMode: BuildMode) => {
-          // Must have track remaining
-          if (G.pseudoStage != PseudoStage.buildingTrack) {
-            return INVALID_MOVE;
-          };
-          if (buildMode == BuildMode.Normal) {
-            if (G.companies[G.toAct!].trainsRemaining == 0) {
-              return INVALID_MOVE;
-            }
-          } else {
-            if (G.companies[G.toAct!].narrowGaugeRemaining == 0) {
-              return INVALID_MOVE;
-            }
-          }
-
-          // Must have build remaining
-          if (G.buildsRemaining! <= 0) {
-            return INVALID_MOVE;
-          }
-
-          // Must be in permitted space
-          let allowed = getAllowedBuildSpaces(G, buildMode, G.toAct!);
-          let thisSpace = allowed.find((i) => i.x == xy.x && i.y == xy.y);
-          if (!thisSpace) {
-            return INVALID_MOVE;
-          };
-
-          if (G.companies[G.toAct!].cash < thisSpace.cost) {
-            return INVALID_MOVE;
-          }
-          G.companies[G.toAct!].cash -= thisSpace.cost;
-          G.companies[G.toAct!].currentRevenue += thisSpace.rev;
-
-          G.track.push({
-            x: xy.x,
-            y: xy.y,
-            narrow: buildMode == BuildMode.Narrow,
-            owner: buildMode == BuildMode.Normal ? G.toAct! : undefined
-          });
-          if (buildMode == BuildMode.Normal) {
-            G.companies[G.toAct!].trainsRemaining -= 1;
-          }
-          else {
-            G.companies[G.toAct!].narrowGaugeRemaining -= 1;
-          }
-          G.anyActionsTaken = true;
-          G.buildsRemaining! -= 1;
-        },
-
-        doneBuilding: (G: IEmuBayState, ctx: Ctx) => {
-          if (G.pseudoStage != PseudoStage.buildingTrack) {
-            return INVALID_MOVE;
-          };
-          if (!G.anyActionsTaken) {
-            console.log("No track built - can't pass");
-            return INVALID_MOVE;
-          }
-          ctx.events?.endTurn!();
-        }
-      },
-    },
-
-    takeResources: {
-      moves: {
-        takeResource: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates) => {
-          if (G.pseudoStage != PseudoStage.takeResources) {
-            return INVALID_MOVE;
-          };
-          if (!getTakeResourceSpaces(G, G.toAct!).find((i) => i.x == xy.x && i.y == xy.y)) {
-            console.log("Can't take from location");
-            return INVALID_MOVE;
-          }
-
-          // Remove resource cube from space
-          G.resourceCubes.splice(
-            G.resourceCubes.findIndex((i) => i.x == xy.x && i.y == xy.y), 1
-          )
-
-          G.mineLocation = xy;
-
-          // Pay to remove resource cube
-          let co = G.companies[G.toAct!];
-          co.cash -= resourceCubeCost(G);
-
-          // Increase revenue
-          co.currentRevenue += resourceCubeRevenue(G, G.toAct!);
-
-          co.resourcesHeld += 1;
-
-          G.anyActionsTaken = true;
-        },
-
-        doneTaking: (G: IEmuBayState, ctx: Ctx) => {
-          if (G.pseudoStage != PseudoStage.takeResources) {
-            return INVALID_MOVE;
-          };
-          if (!G.anyActionsTaken) {
-            console.log("No resources taken - can't pass");
-            return INVALID_MOVE;
-          }
-          ctx.events?.endTurn!();
-        }
-      },
-      turn: {
-        moveLimit: 3
-      },
-      next: "takeAction"
-    },
-
-    auction: {
-      // There is more copy paste here than there should be
-      onBegin: (G: IEmuBayState, ctx: Ctx) => {
-        G.passed = new Array(ctx.numPlayers).fill(false);
-        G.currentBid = 0;
-        G.winningBidder = 0;
-        G.auctionFinished = false;
-      },
-      turn: {
-        moveLimit: 1,
-        order: {
-          first: (G: IEmuBayState, ctx: Ctx) => G.playerInitialBidder!,
-          next: (G: IEmuBayState, ctx: Ctx) => {
-            if (!G.auctionFinished) {
-              var nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
-              while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
-                nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
-              }
-              return nextPlayerPos;
-            }
-            else {
-              // For some reason, boardgame.io still runs this after phase change - 
-              // so go to the sensible thing that it will need next
-              return ctx.playOrder.indexOf(G.playerAfterAuction!.toString());
-            }
-          }
-        }
-      },
-      moves: {
-        makeBid: (G: IEmuBayState, ctx: Ctx, amount: number) => {
-          if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
-            G.winningBidder = +ctx.currentPlayer;
-            G.currentBid = amount;
-            var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-            if (biddersRemaining == 1) {
-              auctionCompanyWon(G, ctx);
-            }
-          }
-          else {
-            return INVALID_MOVE;
-          }
-        },
-        pass: (G: IEmuBayState, ctx: Ctx) => {
-          if (G.currentBid == 0 && +ctx.currentPlayer == G.playerInitialBidder) {
-            // First player must bid
-            return INVALID_MOVE;
-          }
-          G.passed![+ctx.currentPlayer] = true;
-          var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
-          if (biddersRemaining <= 1) {
             auctionCompanyWon(G, ctx);
           }
-        },
-      },
+        }
+        ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
+      }
+      else {
+        return INVALID_MOVE;
+      }
     },
-  }
+
+    pass: (G: IEmuBayState, ctx: Ctx) => {
+      if (G.pseudoPhase != PseudoPhase.InitialAuction && G.pseudoPhase != PseudoPhase.Auction) {
+        // Remove after phase bug fixed
+        return INVALID_MOVE;
+      };
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+
+      if (G.pseudoPhase == PseudoPhase.Auction) {
+        if (G.currentBid == 0 && +ctx.currentPlayer == G.playerInitialBidder) {
+          // First player must bid, in auction that's not initial
+          return INVALID_MOVE;
+        }
+      }
+
+      G.passed![+ctx.currentPlayer] = true;
+      var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
+      ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
+      if (biddersRemaining <= 1) {
+        if (G.currentBid != 0 || biddersRemaining == 0) {
+          // All other players passed and bid made, or all players passed
+          if (G.pseudoPhase == PseudoPhase.InitialAuction) {
+            initialAuctionCompanyWon(G, ctx);
+          } else {
+            auctionCompanyWon(G, ctx);
+          }
+        }
+      }
+    },
+  },
 };

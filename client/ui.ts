@@ -3,7 +3,7 @@ import { Client } from "boardgame.io/dist/types/packages/client";
 import {
     getMinimumBid, IEmuBayState, actions, ACTION_CUBE_LOCATION_ACTIONS, IBond, BuildMode,
     ICoordinates, getMergableCompanies, CompanyType, stalemateAvailable, getAllowedBuildSpaces,
-    getTakeResourceSpaces, EndGameReason, IEndgameState, activeEndGameConditions, PseudoStage
+    getTakeResourceSpaces, EndGameReason, IEndgameState, activeEndGameConditions, PseudoStage, PseudoPhase
 }
     from "../game/game";
 import { Board } from "../client/board";
@@ -238,8 +238,8 @@ export class Ui {
                 contentDiv?.append(this.takeResourcesStage(gamestate, ctx, client));
             }
 
-            let phase = ctx.phase;
-            if (phase == "auction" || phase == "initialAuction") {
+            let phase = gamestate.pseudoPhase;
+            if (phase == PseudoPhase.Auction || phase == PseudoPhase.InitialAuction) {
                 let auctionH1 = document.createElement("h1");
                 auctionH1.innerText = "Auction"
                 contentDiv?.append(auctionH1);
@@ -267,7 +267,7 @@ export class Ui {
                 statusP.innerText = statusText;
 
                 // Can only pass during initial auction, or if you're not required to make initial bid
-                if (phase == "initialAuction" || (phase == "auction" && gamestate.currentBid! > 0)) {
+                if (phase == PseudoPhase.InitialAuction || (phase == PseudoPhase.Auction && gamestate.currentBid! > 0)) {
                     let passP = document.createElement("p");
                     passP.innerText = "Pass";
                     if (this.playerIsActive) passP.classList.add("chooseableaction");
