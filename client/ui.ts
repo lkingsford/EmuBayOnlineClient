@@ -2,7 +2,8 @@ import { Ctx } from "boardgame.io";
 import { Client } from "boardgame.io/dist/types/packages/client";
 import {
     getMinimumBid, IEmuBayState, actions, ACTION_CUBE_LOCATION_ACTIONS, IBond, BuildMode,
-    ICoordinates, getMergableCompanies, CompanyType, stalemateAvailable, getAllowedBuildSpaces, getTakeResourceSpaces, EndGameReason, IEndgameState, activeEndGameConditions
+    ICoordinates, getMergableCompanies, CompanyType, stalemateAvailable, getAllowedBuildSpaces,
+    getTakeResourceSpaces, EndGameReason, IEndgameState, activeEndGameConditions, PseudoStage
 }
     from "../game/game";
 import { Board } from "../client/board";
@@ -111,21 +112,18 @@ export class Ui {
             actionsDiv.classList.add("actioncontainer");
             contentDiv?.appendChild(actionsDiv);
 
-            let stage = "nostage";
-            if (ctx.activePlayers) {
-                stage = ctx.activePlayers![+ctx.currentPlayer];
-            }
+            let stage = gamestate.pseudoStage
 
             switch (stage) {
-                case "takeAction":
+                case PseudoStage.takeAction:
                     statusDiv.innerText = "Choose an action"
                     break;
-                case "removeCube":
+                case PseudoStage.removeCube:
                     statusDiv.innerText = "Remove a cube"
                     break;
             }
 
-            if (stage == "removeCube" && stalemateAvailable(gamestate, ctx)) {
+            if (stage == PseudoStage.removeCube && stalemateAvailable(gamestate, ctx)) {
                 let stalemateDiv = document.createElement("div");
                 stalemateDiv.innerText = "Declare Stalemate";
                 if (this.playerIsActive) stalemateDiv.classList.add("chooseableaction");
@@ -160,11 +158,11 @@ export class Ui {
                 if (this.playerIsActive) {
                     actionDiv!.onclick = (ev) => {
                         if (!(ev.currentTarget as HTMLElement).classList.contains("chooseableaction")) { return; }
-                        if (stage == "removeCube") {
+                        if (stage == PseudoStage.removeCube) {
                             client.moves.removeCube(+(ev.currentTarget as HTMLDivElement)!.dataset!.actionid!)
                         }
 
-                        if (stage == "takeAction") {
+                        if (stage == PseudoStage.takeAction) {
                             switch (+(ev.currentTarget as HTMLDivElement)!.dataset!.actionid!) {
                                 case actions.AuctionShare:
                                     this.clearActionExtras();
@@ -194,13 +192,13 @@ export class Ui {
                     }
                 }
 
-                if (stage == "removeCube") {
+                if (stage == PseudoStage.removeCube) {
                     if (filledSpaceCount > 0) {
                         if (this.playerIsActive) actionDiv.classList.add("chooseableaction")
                     }
                 }
 
-                if (stage == "takeAction") {
+                if (stage == PseudoStage.takeAction) {
                     if (availableSpaceCount > 0 && idx != gamestate.actionCubeTakenFrom) {
                         if (this.playerIsActive) actionDiv.classList.add("chooseableaction")
                     }
@@ -226,14 +224,14 @@ export class Ui {
                 contentDiv?.append(this.gameOverPhase(gamestate, ctx));
             }
 
-            if (stage == "buildingTrack") {
+            if (stage == PseudoStage.buildingTrack) {
                 board.tileClickedOn = (xy) => {
                     client.moves.buildTrack(xy, this.buildMode);
                 }
                 contentDiv?.append(this.buildTrackStage(gamestate, ctx, client, board));
             }
 
-            if (stage == "takeResources") {
+            if (stage == PseudoStage.takeResources) {
                 board.tileClickedOn = (xy) => {
                     client.moves.takeResource(xy);
                 }
@@ -778,7 +776,7 @@ export class Ui {
                 } else {
                     this.buildMode = BuildMode.Narrow;
                 }
-                client.moves.buildTrack(+(cop_ev.currentTarget as HTMLElement)!.dataset!.co!);
+                client.moves.buildTrackAction(+(cop_ev.currentTarget as HTMLElement)!.dataset!.co!);
             }
             buildTrackExtraDiv.appendChild(coP);
         })
