@@ -132,6 +132,64 @@ export class Ui {
                 contentDiv?.appendChild(stalemateDiv);
             }
 
+            {
+                let actionDiv = document.createElement("div");
+                actionDiv.innerText = "Review";
+                actionDiv.classList.add("actionbox");
+                actionsDiv?.appendChild(actionDiv);
+
+                let row1 = document.createElement("p");
+                actionDiv.appendChild(row1);
+
+                let startSpan = document.createElement("span");
+                startSpan.innerText = "Start";
+                startSpan.id = "StartSpan";
+                startSpan.classList.add("smallerchooseable")
+                row1.appendChild(startSpan)
+                if (visibleTurnId != 0) {
+                    startSpan.classList.add("chooseableaction");
+                    startSpan.onclick = e => {
+                        this.client.JumpToStart();
+                    }
+                }
+
+                let backSpan = document.createElement("span");
+                backSpan.innerText = "Back";
+                backSpan.id = "BackSpan";
+                backSpan.classList.add("smallerchooseable")
+                row1.appendChild(backSpan)
+                if (visibleTurnId != 0) {
+                    backSpan.classList.add("chooseableaction");
+                    backSpan.onclick = e => {
+                        this.client.StepBack();
+                    }
+                }
+
+                let nextSpan = document.createElement("span");
+                nextSpan.innerText = "Next";
+                nextSpan.id = "NextSpan";
+                nextSpan.classList.add("smallerchooseable")
+                row1.appendChild(nextSpan)
+                if (!isCurrent) {
+                    nextSpan.classList.add("chooseableaction");
+                    nextSpan.onclick = e => {
+                        this.client.StepForward();
+                    }
+                }
+
+                let currentSpan = document.createElement("span");
+                currentSpan.innerText = "Now";
+                currentSpan.id = "CurrentSpan";
+                currentSpan.classList.add("smallerchooseable")
+                row1.appendChild(currentSpan)
+                if (!isCurrent) {
+                    currentSpan.classList.add("chooseableaction");
+                    currentSpan.onclick = e => {
+                        this.client.SkipToCurrent();
+                    }
+                }
+            }
+
             ACTIONS.forEach((actionName, idx) => {
                 let actionDiv = document.createElement("div");
                 actionDiv.innerText = actionName;
@@ -303,78 +361,6 @@ export class Ui {
             row2.id = `row2`;
             row2.classList.add('row');
             document.querySelector("#maingrid")?.insertBefore(row2, boardElement);
-        }
-
-        let controlsDiv = document.querySelector("#controls");
-        if (!controlsDiv) {
-            let controlItemDiv = document.createElement("div");
-            controlItemDiv.classList.add("two", "columns", "item");
-            row2.appendChild(controlItemDiv);
-
-            let controlCardDiv = document.createElement("div");
-            controlCardDiv.classList.add("card");
-            controlItemDiv.appendChild(controlCardDiv);
-
-            let controlsH1 = document.createElement("h1");
-            controlsH1.textContent = "Review"
-            controlCardDiv.appendChild(controlsH1);
-
-            controlsDiv = document.createElement("div");
-            controlsDiv.classList.add("content");
-            controlsDiv.id = "controls"
-            controlCardDiv.appendChild(controlsDiv);
-        }
-        controlsDiv.innerHTML = "";
-
-        let controlsP = document.createElement("p");
-        controlsDiv.appendChild(controlsP);
-
-        let startSpan = document.createElement("span");
-        startSpan.innerText = "Start";
-        startSpan.id = "StartSpan";
-        startSpan.classList.add("smallerchooseable")
-        controlsP.appendChild(startSpan)
-        if (visibleTurnId != 0) {
-            startSpan.classList.add("chooseableaction");
-            startSpan.onclick = e => {
-                this.client.JumpToStart();
-            }
-        }
-
-        let backSpan = document.createElement("span");
-        backSpan.innerText = "Back";
-        backSpan.id = "BackSpan";
-        backSpan.classList.add("smallerchooseable")
-        controlsP.appendChild(backSpan)
-        if (visibleTurnId != 0) {
-            backSpan.classList.add("chooseableaction");
-            backSpan.onclick = e => {
-                this.client.StepBack();
-            }
-        }
-
-        let nextSpan = document.createElement("span");
-        nextSpan.innerText = "Next";
-        nextSpan.id = "NextSpan";
-        nextSpan.classList.add("smallerchooseable")
-        controlsP.appendChild(nextSpan)
-        if (!isCurrent) {
-            nextSpan.classList.add("chooseableaction");
-            nextSpan.onclick = e => {
-                this.client.StepForward();
-            }
-        }
-
-        let currentSpan = document.createElement("span");
-        currentSpan.innerText = "Now";
-        currentSpan.id = "CurrentSpan";
-        currentSpan.classList.add("smallerchooseable")
-        controlsP.appendChild(currentSpan)
-        if (!isCurrent) {
-            currentSpan.classList.add("chooseableaction");
-            currentSpan.onclick = e => {
-                this.client.SkipToCurrent();
-            }
         }
 
         // Endgame tracker
