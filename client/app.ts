@@ -130,12 +130,10 @@ export class EmuBayRailwayCompanyClient {
 
         // TODO: Map these types out correctly
         this.client.log.forEach((i: any) => {
-            const { action, automatic } = i;
+            const { action } = i;
             // ignore automatic log entries - in example code, but not including until known to be necessary
-            if (!automatic) {
-                state = reducer(state, action);
-                stateSnapshots.push({ state: state, automatic: automatic, ctx: state.ctx });
-            }
+            state = reducer(state, action);
+            stateSnapshots.push({ state: state, automatic: i?.action?.type != "MAKE_MOVE", ctx: state.ctx });
         });
 
         return stateSnapshots;
