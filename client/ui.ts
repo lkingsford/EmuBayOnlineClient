@@ -116,7 +116,7 @@ export class Ui {
                 startSpan.classList.add("smallerchooseable")
                 row1.appendChild(startSpan)
                 if (visibleTurnId != 0) {
-                    startSpan.classList.add("chooseableaction");
+                    startSpan.classList.add("chooseablenonaction");
                     startSpan.onclick = e => {
                         this.client.JumpToStart();
                     }
@@ -128,7 +128,7 @@ export class Ui {
                 backSpan.classList.add("smallerchooseable")
                 row1.appendChild(backSpan)
                 if (visibleTurnId != 0) {
-                    backSpan.classList.add("chooseableaction");
+                    backSpan.classList.add("chooseablenonaction");
                     backSpan.onclick = e => {
                         this.client.StepBack();
                     }
@@ -140,7 +140,7 @@ export class Ui {
                 nextSpan.classList.add("smallerchooseable")
                 row1.appendChild(nextSpan)
                 if (!isCurrent) {
-                    nextSpan.classList.add("chooseableaction");
+                    nextSpan.classList.add("chooseablenonaction");
                     nextSpan.onclick = e => {
                         this.client.StepForward();
                     }
@@ -152,7 +152,7 @@ export class Ui {
                 currentSpan.classList.add("smallerchooseable")
                 row1.appendChild(currentSpan)
                 if (!isCurrent) {
-                    currentSpan.classList.add("chooseableaction");
+                    currentSpan.classList.add("chooseablenonaction");
                     currentSpan.onclick = e => {
                         this.client.SkipToCurrent();
                     }
@@ -968,6 +968,10 @@ export class Ui {
                 return END_GAME_REASON_TEXT[i];
             }).join("");
 
+        // Remove action selection
+        document.querySelectorAll(".chooseableaction").forEach(div => {
+            div.classList.remove("chooseableaction");
+        });
 
         return gameOverPhase;
     }
