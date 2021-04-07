@@ -61,7 +61,7 @@ export class EmuBayRailwayCompanyClient {
     public pixiApp = new PIXI.Application({ backgroundColor: 0xEEEEFF, width: 1000, height: 1000 });
 
     private theUi: Ui | undefined;
-    private mapState: Board | undefined;
+    public mapState: Board | undefined;
 
     public startLoop(resources: { [index: string]: PIXI.LoaderResource }): void {
         this.mapState = new Board(this.pixiApp, resources);
@@ -172,7 +172,15 @@ function continueLoading() {
         console.log("Resources loaded");
         Board.getTextures(loader.resources)
         app.startLoop(loader.resources);
+        resize();
     })
 }
 
 document.querySelector("#board")?.appendChild(app.pixiApp.view)
+
+window.onresize = resize;
+
+function resize() {
+    let boardDiv = document.querySelector("#boarditem")
+    app!.mapState?.resizeToWidth(boardDiv?.clientWidth ?? 1000);
+}

@@ -61,6 +61,12 @@ export class Board extends State.State {
     private view_scale = 0.5;
     private cube_place_radius = 60;
 
+    public resizeToWidth(newWidth: number): void {
+        this.view_scale = newWidth / 2000;
+        this.playfield!.scale = new PIXI.Point(this.view_scale, this.view_scale);
+        this.app.renderer.resize(2000 * this.view_scale, 2000 * this.view_scale);
+    }
+
     public drawMap(gamestate: IEmuBayState, ctx: Ctx): void {
         // Obviously, not for use in animation
         this.terrain?.removeChildren();

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <title>Emu Bay Railway Company</title>
   <meta charset="utf-8" />
@@ -7,7 +8,7 @@
   <link rel="stylesheet" href="css/skeleton.css">
   <style>
     body {
-        font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+      font-family: 'Montserrat', 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     }
 
     canvas {
@@ -25,27 +26,31 @@
       color: #000000;
       background: #EEEEFF;
       border: 2px solid black;
-      border-bottom-left-radius: 1em;
-      border-bottom-right-radius: 1em;
     }
+
     .item.muuri-item-dragging {
       z-index: 3;
     }
+
     .item.muuri-item-releasing {
       z-index: 2;
     }
+
     .item.muuri-item-hidden {
       z-index: 0;
     }
 
-    h1, h2, h3, h4 {
-      font-family: 'Cantora One', serif 
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Cantora One', serif
     }
 
     .card h1 {
       width: 100%;
       font-size: 1.5em;
-      font-variant-caps: all-petite-caps ;
+      font-variant-caps: all-petite-caps;
       background-color: #594757;
       color: white;
       position: relative;
@@ -77,11 +82,6 @@
     .winner {
       font-size: 2em;
       font-weight: bolder;
-    }
-
-    #boarditem {
-      width: 1000px;
-      height: 1050px;
     }
 
     .activecondition {
@@ -132,6 +132,19 @@
       background: #ff8888;
     }
 
+    #logtext {
+      height: 5em;
+      overflow: scroll;
+    }
+
+    #logtext ul li:nth-child(even) {
+      background: #ffffff;
+    }
+
+    #boarditem {
+      max-width: 1000px;
+    }
+
     span.chooseableaction {
       padding: 0em 1em 0em 1em;
       margin: 0.25em;
@@ -139,22 +152,32 @@
 
     span.smallerchooseable {
       padding: 0em 0em 0em 0em;
-      font-size:1em;
+      font-size: 1em;
     }
 
-    p.EBR, h2.EBR {
+    p.EBR,
+    h2.EBR {
       color: #0022ff;
     }
 
-    p.TMLC, h2.TMLC {
+    p.TMLC,
+    h2.TMLC {
       color: #999900;
     }
 
-    p.LW, h2.LW {
+    p.LW,
+    h2.LW {
       color: #009900;
     }
 
-    p.GT,p.MLM,p.NED,p.NMF, h2.GT, h2.MLM, h2.NED, h2.NMF {
+    p.GT,
+    p.MLM,
+    p.NED,
+    p.NMF,
+    h2.GT,
+    h2.MLM,
+    h2.NED,
+    h2.NMF {
       color: #cc0000;
     }
 
@@ -170,7 +193,10 @@
       background-color: #009900;
     }
 
-    h1.GT,h1.MLM,h1.NED,h1.NMF {
+    h1.GT,
+    h1.MLM,
+    h1.NED,
+    h1.NMF {
       background-color: #cc0000;
     }
 
@@ -186,28 +212,54 @@
     }
   </style>
 </head>
-</head>
+
 <body>
   <div id="maingrid">
-  <div class="row" id="boardrow">
-    <div class="item twelve columns" id="boarditem"><div class="card" id="boardcontent">
-      <h1>Map</h1>
-      <div class="content" id="board"></div>
-    </div></div>
-  </div>
-  <div class="row">
-    <div class="item four columns"><div class="card">
-      <h1>Game info</h1>
-      <div class="content">
-        <p><b>Emu Bay Railway Company (2021-01-24 Playtest version)</b></p>
-        <p>Designed by Lachlan Kingsford 2020-21</p> 
-        <p><a href="rules/rules.pdf" target="_blank">Rules</a></p>
-        <p>Available for Print-and-Play from <a href="https://nerdygentleman.itch.io/the-emu-bay-railway-company" target="_blank">itch.io</a></p>
+      <div class="row" id="actionrow">
+      <div class="item twelve columns" id="actions">
+        <div class="card content" id="loginnerdiv">
+          <h1>Actions</h1>
+          <div class="content" id="actioncontent"></div>
+        </div>
       </div>
     </div>
-  </div>
+
+    <div class="row" id="logRow">
+      <div class="item twelve columns" id="logitem">
+        <div class="card" id="loginnerdiv">
+          <h1>Log</h1>
+          <div class="content" id="logtext"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="row2">
+      <div class="item eight columns" id="boarditem">
+        <div class="card" id="boardcontent">
+          <h1>Map</h1>
+          <div class="content" id="board"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="item four columns">
+        <div class="card">
+          <h1>Game info</h1>
+          <div class="content">
+            <p><b>Emu Bay Railway Company (2021-01-24 Playtest version)</b></p>
+            <p>Designed by Lachlan Kingsford 2020-21</p>
+            <p><a href="rules/rules.pdf" target="_blank">Rules</a></p>
+            <p>Available for Print-and-Play from <a href="https://nerdygentleman.itch.io/the-emu-bay-railway-company"
+                target="_blank">itch.io</a></p>
+          </div>
+        </div>
+      </div>
+      </div>
 </body>
+
 </html>
 
 <link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&family=Cantora+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300&family=Cantora+One&display=swap"
+  rel="stylesheet">
