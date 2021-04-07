@@ -1069,9 +1069,11 @@ export const EmuBayRailwayCompany = {
 
   turn: {
     order: {
-      // Todo: Fix this
-      first: () => 0,
-      next: TurnNext
+      // This is way too hacky for me to be happy. Keeping first as actual
+      // first was having bad effects on turn order (skipping any players in)
+      // the order before it. Not sure if bug in my code or boardgame.io.
+      first: (G: IEmuBayState, ctx: Ctx) => ctx.turn == 0 ? G.firstPlayerOfPhase! : 0,
+      next: () => 0
     },
   },
 
