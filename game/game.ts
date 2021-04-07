@@ -77,6 +77,7 @@ export interface IEmuBayState {
   pseudoPhase?: PseudoPhase;
   firstTurnOfPhase?: boolean;
   firstPlayerOfPhase?: number;
+  turnLog: string[]; // Don't know if this is wise or not (memory wise) but it's here for now
 };
 
 export enum PseudoStage {
@@ -326,12 +327,14 @@ function initialAuctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
   G.companies[G.companyForAuction!].cash += G.currentBid!;
   G.companies[G.companyForAuction!].sharesHeld.push(G.winningBidder!);
   G.companies[G.companyForAuction!].sharesRemaining -= 1;
+  G.turnLog.push(`!%C${G.companyForAuction} won by %P${G.winningBidder} for ₤${G.currentBid}`);
 
   var auctionNumber = InitialAuctionOrder.indexOf(G.companyForAuction!);
   if ((auctionNumber + 1) < InitialAuctionOrder.length) {
     G.companyForAuction = InitialAuctionOrder[auctionNumber + 1];
     G.currentBid = 0;
     G.passed = new Array(ctx.numPlayers).fill(false);
+    G.turnLog.push(`!%C${G.companyForAuction} for auction`);
     ctx.events!.endTurn!({ next: G.winningBidder });
     return;
   }
@@ -347,6 +350,7 @@ function auctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
   G.companies[G.companyForAuction!].sharesHeld.push(G.winningBidder!);
   G.companies[G.companyForAuction!].open = true;
   G.companies[G.companyForAuction!].sharesRemaining -= 1;
+  G.turnLog.push(`!%C${G.companyForAuction} won by %P${G.winningBidder} for ₤${G.currentBid}`);
   G.auctionFinished = true;
   // Make the next independent available
   if (G.companies[G.companyForAuction!].companyType == CompanyType.Minor) {
@@ -919,6 +923,9 @@ function StartPhase(phase: PseudoPhase, G: IEmuBayState, ctx: Ctx) {
       G.winningBidder = 0;
       G.auctionFinished = false;
       G.firstPlayerOfPhase = Math.floor(ctx.random!.Number() * ctx.numPlayers);
+      G.turnLog.push("!Initial auction starting");
+      G.turnLog.push(`!First player: %P${G.firstPlayerOfPhase}`);
+      G.turnLog.push(`!%C${G.companyForAuction} for auction`);
       break;
 
     case PseudoPhase.NormalPlay:
@@ -943,7 +950,7 @@ function TurnNext(G: IEmuBayState, ctx: Ctx): number {
     return G.firstPlayerOfPhase!;
   }
 
-  let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i=>i==ctx.currentPlayer.toString());
+  let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
 
   switch (G.pseudoPhase) {
     case PseudoPhase.InitialAuction:
@@ -1051,7 +1058,8 @@ export const EmuBayRailwayCompany = {
       // GT Excluded because in initial auction already
       independentOrder: [CompanyID.MLM, CompanyID.NED, CompanyID.NMF],
       track: track,
-      bonds: initialAvailableBonds()
+      bonds: initialAvailableBonds(),
+      turnLog: [],
     };
 
     StartPhase(PseudoPhase.InitialAuction, G, ctx);
@@ -1061,6 +1069,7 @@ export const EmuBayRailwayCompany = {
 
   turn: {
     order: {
+      // Todo: Fix this
       first: () => 0,
       next: TurnNext
     },
@@ -1082,6 +1091,8 @@ export const EmuBayRailwayCompany = {
         return INVALID_MOVE;
       }
 
+      G.turnLog.push(`%P${ctx.currentPlayer} removes cube from %A${action}`)
+
       // Remove a cube to place
       G.actionCubeTakenFrom = action;
       G.actionCubeLocations[filledSpaces[0].idx] = false;
@@ -1090,6 +1101,7 @@ export const EmuBayRailwayCompany = {
 
     declareStalemate: (G: IEmuBayState, ctx: Ctx) => {
       if (stalemateAvailable(G, ctx)) {
+        G.turnLog.push(`%P${ctx.currentPlayer} declares stalemate`);
         ctx.events!.endGame!(getEndgameState(G, [EndGameReason.stalemate]));
       }
       var availableSpaces = ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
@@ -1103,11 +1115,12 @@ export const EmuBayRailwayCompany = {
       if (jiggleCubes(G, actions.BuildTrack) == INVALID_MOVE) {
         return INVALID_MOVE;
       };
+      G.turnLog.push(`%P${ctx.currentPlayer} starts building track for %C${company}`);
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
       G.toAct = company;
       G.buildsRemaining = 3;
       G.anyActionsTaken = false;
-      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i=>i==ctx.currentPlayer.toString());
+      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
       G.playerAfterPhase = (playOrderPos + 1) % ctx.numPlayers;
       G.pseudoStage = PseudoStage.buildingTrack;
     },
@@ -1119,10 +1132,11 @@ export const EmuBayRailwayCompany = {
       if (jiggleCubes(G, actions.TakeResources) == INVALID_MOVE) {
         return INVALID_MOVE;
       };
+      G.turnLog.push(`%P${ctx.currentPlayer} starts taking resources for %C${company}`);
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
       G.toAct = company;
       G.mineLocation = null;
-      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i=>i==ctx.currentPlayer.toString());
+      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
       G.playerAfterPhase = (playOrderPos + 1) % ctx.numPlayers;
       G.pseudoStage = PseudoStage.takeResources;
     },
@@ -1135,7 +1149,7 @@ export const EmuBayRailwayCompany = {
         return INVALID_MOVE;
       };
       // Hack due to weirdness
-      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i=>i==ctx.currentPlayer.toString());
+      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
       G.playerAfterPhase = (playOrderPos + 1) % ctx.numPlayers;
       G.companyForAuction = company;
       if (G.players[+ctx.currentPlayer].cash < getMinimumBid(G, company)) {
@@ -1146,7 +1160,6 @@ export const EmuBayRailwayCompany = {
         console.log("No shares remaining");
         return INVALID_MOVE;
       }
-      G.firstTurnOfPhase = false; // Remove after phase bug fixed
       // Check that it's the next independent available if it's independent
       if (G.companies[company].companyType == CompanyType.Minor) {
         if ((G.independentOrder.length == 0) || (company != G.independentOrder[0])) {
@@ -1154,6 +1167,10 @@ export const EmuBayRailwayCompany = {
           return INVALID_MOVE;
         }
       }
+
+      G.firstTurnOfPhase = false; // Remove after phase bug fixed
+
+      G.turnLog.push(`%P${ctx.currentPlayer} starts an auction for %C${company}`);
 
       G.playerInitialBidder = +ctx.currentPlayer;
 
@@ -1167,6 +1184,9 @@ export const EmuBayRailwayCompany = {
       if (jiggleCubes(G, actions.IssueBond) == INVALID_MOVE) {
         return INVALID_MOVE;
       };
+
+      let bondString = `₤${G.bonds[bond].amount!} (₤${G.bonds[bond].baseInterest}Δ₤${G.bonds[bond].interestDelta}/div)`
+      G.turnLog.push(`%P${ctx.currentPlayer} issues a bond for %C${company} for ${bondString}`);
 
       G.companies[company].bonds.push(G.bonds[bond]);
       G.companies[company].cash += G.bonds[bond].amount;
@@ -1187,6 +1207,8 @@ export const EmuBayRailwayCompany = {
         console.log("Merge is invalid")
         return INVALID_MOVE;
       }
+
+      G.turnLog.push(`%P${ctx.currentPlayer} merges %C${major} and %C${minor}`);
 
       // Exchange shares
       G.companies[major].sharesHeld.push(G.companies[minor].sharesHeld[0]);
@@ -1222,25 +1244,41 @@ export const EmuBayRailwayCompany = {
       if (jiggleCubes(G, actions.PayDividend) == INVALID_MOVE) {
         return INVALID_MOVE;
       };
+
+      G.turnLog.push(`%P${ctx.currentPlayer} pays dividends`);
+
       // Pay dividends
-      G.companies.forEach((co) => {
+      G.companies.forEach((co, idx) => {
         let amount = co.currentRevenue > 0 ? Math.ceil(co.currentRevenue / co.sharesHeld.length) : Math.floor(co.currentRevenue / co.sharesHeld.length);
+
+        // Sometimes, maybe, I should split something like this
+        if (co.open) {
+          G.turnLog.push(`!%C${idx} pays ₤${amount} per share (${G.players.map((_, p) => p)
+                                                                          .filter((p) => co.sharesHeld.some(p2 => p2 == p))
+                                                                          .map((p) => `%P${p}: ₤${amount * co.sharesHeld.filter(p1 => p == p1).length}`).join(", ")})`)
+        }
+
         co.sharesHeld.forEach((n) => {
           G.players[n].cash += amount;
-          console.log(n, " payed ", amount, "for", co)
         });
 
         // Adjust non-deferred debt
         let debtChange = co.bonds.filter((i) => !i.deferred).reduce<number>((p, i) => i.interestDelta + p, 0)
         co.currentRevenue -= debtChange;
         console.log(co, " revenue reduced by ", debtChange)
+        let totalDebtChange = debtChange;
 
         // Increase debt for each deferred
         co.bonds.filter((i) => i.deferred).forEach((i) => {
           co.currentRevenue -= i.baseInterest;
           console.log(co, " revenue reduced by ", i.baseInterest, " following undefferal")
           i.deferred = false;
+          totalDebtChange += i.baseInterest;
         });
+
+        if (totalDebtChange > 0) {
+          G.turnLog.push(`!%C${idx} revenue reduced by ₤${totalDebtChange}`);
+        }
       })
 
       // Check for bankruptcy
@@ -1287,8 +1325,11 @@ export const EmuBayRailwayCompany = {
       if (G.companies[G.toAct!].cash < thisSpace.cost) {
         return INVALID_MOVE;
       }
-      G.companies[G.toAct!].cash -= thisSpace.cost;
-      G.companies[G.toAct!].currentRevenue += thisSpace.rev;
+
+      let cost = thisSpace.cost;
+      G.companies[G.toAct!].cash -= cost;
+      let rev = thisSpace.rev;
+      G.companies[G.toAct!].currentRevenue += rev;
 
       G.track.push({
         x: xy.x,
@@ -1304,6 +1345,8 @@ export const EmuBayRailwayCompany = {
       }
       G.anyActionsTaken = true;
       G.buildsRemaining! -= 1;
+
+      G.turnLog.push(`%P${ctx.currentPlayer} builds track for %C${G.toAct} at (${xy.x}, ${xy.y}) costing ₤${cost} increasing revenue by ₤${rev}`)
     },
 
     doneBuilding: (G: IEmuBayState, ctx: Ctx) => {
@@ -1337,10 +1380,14 @@ export const EmuBayRailwayCompany = {
 
       // Pay to remove resource cube
       let co = G.companies[G.toAct!];
-      co.cash -= resourceCubeCost(G);
+      let cost = resourceCubeCost(G);
+      co.cash -= cost;
 
       // Increase revenue
-      co.currentRevenue += resourceCubeRevenue(G, G.toAct!);
+      let rev = resourceCubeRevenue(G, G.toAct!);
+      co.currentRevenue += rev;
+
+      G.turnLog.push(`%P${ctx.currentPlayer} takes resources for %C${G.toAct} at (${xy.x}, ${xy.y}) costing ₤${cost} increasing revenue by ₤${rev}`);
 
       co.resourcesHeld += 1;
 
@@ -1370,6 +1417,7 @@ export const EmuBayRailwayCompany = {
       if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
         G.winningBidder = +ctx.currentPlayer;
         G.currentBid = amount;
+        G.turnLog.push(`%P${ctx.currentPlayer} bids ₤${amount} for %C${G.companyForAuction}`);
         var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
         if (biddersRemaining == 1) {
           if (G.pseudoPhase == PseudoPhase.InitialAuction) {
@@ -1391,7 +1439,7 @@ export const EmuBayRailwayCompany = {
         return INVALID_MOVE;
       };
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
-
+      G.turnLog.push(`%P${ctx.currentPlayer} passes on %C${G.companyForAuction}`);
       if (G.pseudoPhase == PseudoPhase.Auction) {
         if (G.currentBid == 0 && +ctx.currentPlayer == G.playerInitialBidder) {
           // First player must bid, in auction that's not initial
