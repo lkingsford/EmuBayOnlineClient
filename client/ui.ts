@@ -525,7 +525,7 @@ export class Ui {
                 contentDiv?.appendChild(bondP);
             });
         };
-        
+
         // Endgame tracker
         {
             let outerDiv = document.querySelector(`#endgame`);
@@ -971,4 +971,54 @@ export class Ui {
 
         return gameOverPhase;
     }
+
+    public UpdateLog(turnNumber: number, state: IEmuBayState) {
+        let logDiv = document.querySelector("#logtext")!;
+        logDiv.innerHTML = "";
+        let ul = document.createElement("ul");
+        logDiv.append(ul);
+        state.turnLog.forEach(turn => {
+            let turnText = this.GetTurnLog(turn);
+            if (turnText) {
+                let li = document.createElement("li");
+                ul.appendChild(li);
+                li.innerText = turnText.text;
+                if (turnText.generated) {
+                    li.classList.add("generated");
+                }
+            }
+            logDiv.scrollTop = logDiv.scrollHeight;
+        })
+    }
+
+    private GetTurnLog(logEntry: string): {text: string, generated: boolean} {
+        // Simple string replacement
+        // %P1 for player idx 1, and so on
+        // %C1 for company idx 1, and so on
+        // %A1 for action idx 1
+        // May be easier with regex, but this'll do for now
+        var ui = this;
+        var templated = logEntry.replace(/\%(..)/g, function(s) {
+            // This will be an issue with more than 9 players...
+            let cls = s[1];
+            let idx = s[2];
+            switch(cls) {
+                case "P":
+                    return ui.playerNames[parseInt(idx)];
+                case "C":
+                    return COMPANY_NAME[parseInt(idx)];
+                case "A":
+                    return ACTIONS[parseInt(idx)];
+                default:
+                    return "ERR"
+            }
+        })
+        let generated = false
+        if (templated.length > 0 && templated[0] == "!") {
+            templated = templated.slice(1);
+            generated = true;
+        }
+        return {text: templated, generated: generated};
+    }
+
 }

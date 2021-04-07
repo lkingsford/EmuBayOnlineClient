@@ -77,11 +77,13 @@ export class EmuBayRailwayCompanyClient {
     }
 
     public SkipToCurrent() {
+        let wasAtCurrent = this.atCurrent;
         this.atCurrent = true;
         if (this.newestState === null) return;
         this!.theUi!.update(this.newestState.G as IEmuBayState, this.newestState.ctx, this.client, this?.mapState!, this.atCurrent, this.visibleTurnId)
         this!.mapState!.drawMap(this.newestState.G as IEmuBayState, this.newestState.ctx);
         this!.visibleTurnId = this.client.log.length - 1;
+        this.theUi!.UpdateLog(this.client.log.length - 1, this.newestState.G as IEmuBayState)
     }
 
     public StepForward() {
@@ -119,6 +121,8 @@ export class EmuBayRailwayCompanyClient {
 
         this!.theUi!.update(state.G as IEmuBayState, ctx, this.client, this?.mapState!, this.atCurrent, this.visibleTurnId)
         this!.mapState!.drawMap(state.G as IEmuBayState, ctx);
+
+        this.theUi!.UpdateLog(this.visibleTurnId, state.G as IEmuBayState);
     }
 
     private GetStateHistory(): IHistoricState[] {
@@ -138,6 +142,7 @@ export class EmuBayRailwayCompanyClient {
 
         return stateSnapshots;
     }
+
 
     private newestState: State | null = null;
 
