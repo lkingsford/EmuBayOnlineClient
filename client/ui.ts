@@ -64,44 +64,13 @@ export class Ui {
         // Reset this on update, will set correctly during update
         board.tileClickedOn = undefined;
 
-        let boardElement = document.querySelector("#boardrow")!;
-
         this.playerNames = Ui.PlayersFromMatch(client.matchData, ctx);
         // isCurrent is whether we're current in the match (as opposed to browsing back or forwards)
         this.playerIsActive = isCurrent && ((!client.playerID) || (client.playerID == +ctx.currentPlayer));
 
         // Action selector
         {
-            let row = document.querySelector(`#actionrow`);
-            let outerDiv = document.querySelector(`#actions`);
             let contentDiv = document.querySelector(`#actions .card .content`);
-            let cardDiv = document.querySelector(`#actions .card`)
-            if (!outerDiv) {
-                row = document.createElement("div");
-                row.id = `actionrow`;
-                row.classList.add('row');
-                document.querySelector("#maingrid")?.insertBefore(row, boardElement);
-
-                outerDiv = document.createElement("div");
-                outerDiv.id = `actions`;
-                document.querySelector("#maingrid")?.appendChild(outerDiv);
-                outerDiv.classList.add("item");
-                outerDiv.classList.add("twelve", "columns");
-
-                cardDiv = document.createElement("div");
-                outerDiv.appendChild(cardDiv);
-                cardDiv.classList.add("card");
-
-                let h = document.createElement("h1");
-                h.innerText = `actions`
-                cardDiv.appendChild(h);
-
-                contentDiv = document.createElement("div");
-                cardDiv.appendChild(contentDiv);
-                contentDiv.classList.add("content")
-
-                row.appendChild(outerDiv);
-            }
 
             contentDiv!.innerHTML = '';
             let statusDiv = document.createElement("div");
@@ -355,98 +324,9 @@ export class Ui {
             }
         }
 
+
         let row2 = document.querySelector(`#row2`);
-        if (!row2) {
-            row2 = document.createElement("div");
-            row2.id = `row2`;
-            row2.classList.add('row');
-            document.querySelector("#maingrid")?.insertBefore(row2, boardElement);
-        }
 
-        // Endgame tracker
-        {
-            let outerDiv = document.querySelector(`#endgame`);
-            let contentDiv = document.querySelector(`#endgame .card .content`);
-            let cardDiv = document.querySelector(`#endgame .card`)
-            if (!outerDiv) {
-                outerDiv = document.createElement("div");
-                outerDiv.id = `endgame`;
-                document.querySelector("#maingrid")?.appendChild(outerDiv);
-                outerDiv.classList.add("item");
-                outerDiv.classList.add("three", "columns");
-
-                cardDiv = document.createElement("div");
-                outerDiv.appendChild(cardDiv);
-                cardDiv.classList.add("card");
-
-                let h = document.createElement("h1");
-                h.innerText = `Endgame Conditions`
-                cardDiv.appendChild(h);
-
-                contentDiv = document.createElement("div");
-                cardDiv.appendChild(contentDiv);
-                contentDiv.classList.add("content")
-
-                row2!.appendChild(outerDiv);
-            }
-
-            contentDiv!.innerHTML = "";
-
-            let descriptionP = document.createElement("p");
-            descriptionP.innerText = "When 2 of these conditions are met, the game will end after dividends are next paid out.";
-            contentDiv?.appendChild(descriptionP);
-
-            let conditionsUl = document.createElement("ul");
-            contentDiv?.appendChild(conditionsUl);
-
-            let activeConditions = activeEndGameConditions(gamestate);
-
-            END_GAME_REASON_TEXT.slice(3).forEach((i, idx) => {
-                let conditionLi = document.createElement("li");
-                conditionLi.innerText = i;
-                if (activeConditions.includes(idx + 3)) {
-                    conditionLi.classList.add("activecondition")
-                }
-                conditionsUl.appendChild(conditionLi);
-            });
-        };
-
-
-        // Bonds
-        {
-            let outerDiv = document.querySelector(`#bonds`);
-            let contentDiv = document.querySelector(`#bonds .card .content`);
-            let cardDiv = document.querySelector(`#bonds .card`)
-            if (!outerDiv) {
-                outerDiv = document.createElement("div");
-                outerDiv.id = `bonds`;
-                document.querySelector("#maingrid")?.appendChild(outerDiv);
-                outerDiv.classList.add("three", "columns");
-                outerDiv.classList.add("item");
-
-                cardDiv = document.createElement("div");
-                outerDiv.appendChild(cardDiv);
-                cardDiv.classList.add("card");
-
-                let h = document.createElement("h1");
-                h.innerText = `Bonds Remaining`
-                cardDiv.appendChild(h);
-
-                contentDiv = document.createElement("div");
-                cardDiv.appendChild(contentDiv);
-                contentDiv.classList.add("content")
-
-                row2!.appendChild(outerDiv);
-            };
-
-            contentDiv!.innerHTML = "";
-
-            gamestate.bonds.forEach((i) => {
-                let bondP = document.createElement("p");
-                bondP.innerText = this.bondToString(i, false);
-                contentDiv?.appendChild(bondP);
-            });
-        };
 
         // Player states
         gamestate.players.forEach((player, idx) => {
@@ -509,12 +389,11 @@ export class Ui {
             });
         });
 
-        let coRow = document.querySelector(`#corow`);
+        let coRow = document.querySelector(`#row2`);
         if (!coRow) {
             coRow = document.createElement("div");
             coRow.id = `coRow`;
             coRow.classList.add('row');
-            document.querySelector("#maingrid")?.insertBefore(coRow, boardElement);
         }
 
         gamestate.companies.forEach((co, idx) => {
@@ -611,6 +490,89 @@ export class Ui {
             }
         });
 
+        // Bonds
+        {
+            let outerDiv = document.querySelector(`#bonds`);
+            let contentDiv = document.querySelector(`#bonds .card .content`);
+            let cardDiv = document.querySelector(`#bonds .card`)
+            if (!outerDiv) {
+                outerDiv = document.createElement("div");
+                outerDiv.id = `bonds`;
+                document.querySelector("#maingrid")?.appendChild(outerDiv);
+                outerDiv.classList.add("three", "columns");
+                outerDiv.classList.add("item");
+
+                cardDiv = document.createElement("div");
+                outerDiv.appendChild(cardDiv);
+                cardDiv.classList.add("card");
+
+                let h = document.createElement("h1");
+                h.innerText = `Bonds Remaining`
+                cardDiv.appendChild(h);
+
+                contentDiv = document.createElement("div");
+                cardDiv.appendChild(contentDiv);
+                contentDiv.classList.add("content")
+
+                row2!.appendChild(outerDiv);
+            };
+
+            contentDiv!.innerHTML = "";
+
+            gamestate.bonds.forEach((i) => {
+                let bondP = document.createElement("p");
+                bondP.innerText = this.bondToString(i, false);
+                contentDiv?.appendChild(bondP);
+            });
+        };
+        
+        // Endgame tracker
+        {
+            let outerDiv = document.querySelector(`#endgame`);
+            let contentDiv = document.querySelector(`#endgame .card .content`);
+            let cardDiv = document.querySelector(`#endgame .card`)
+            if (!outerDiv) {
+                outerDiv = document.createElement("div");
+                outerDiv.id = `endgame`;
+                document.querySelector("#maingrid")?.appendChild(outerDiv);
+                outerDiv.classList.add("item");
+                outerDiv.classList.add("three", "columns");
+
+                cardDiv = document.createElement("div");
+                outerDiv.appendChild(cardDiv);
+                cardDiv.classList.add("card");
+
+                let h = document.createElement("h1");
+                h.innerText = `Endgame Conditions`
+                cardDiv.appendChild(h);
+
+                contentDiv = document.createElement("div");
+                cardDiv.appendChild(contentDiv);
+                contentDiv.classList.add("content")
+
+                row2!.appendChild(outerDiv);
+            }
+
+            contentDiv!.innerHTML = "";
+
+            let descriptionP = document.createElement("p");
+            descriptionP.innerText = "When 2 of these conditions are met, the game will end after dividends are next paid out.";
+            contentDiv?.appendChild(descriptionP);
+
+            let conditionsUl = document.createElement("ul");
+            contentDiv?.appendChild(conditionsUl);
+
+            let activeConditions = activeEndGameConditions(gamestate);
+
+            END_GAME_REASON_TEXT.slice(3).forEach((i, idx) => {
+                let conditionLi = document.createElement("li");
+                conditionLi.innerText = i;
+                if (activeConditions.includes(idx + 3)) {
+                    conditionLi.classList.add("activecondition")
+                }
+                conditionsUl.appendChild(conditionLi);
+            });
+        };
     }
 
     // Clear the additional 'extra data' selector things from actions
@@ -901,7 +863,6 @@ export class Ui {
         takeResourcesStageDiv.append(title);
 
         let co = gamestate.companies[gamestate.toAct!]!;
-
 
         {
             let cashP = document.createElement("p")
