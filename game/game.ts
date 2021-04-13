@@ -1,7 +1,7 @@
 import { INVALID_MOVE } from 'boardgame.io/core'
 import { Ctx } from 'boardgame.io'
 
-export const GAME_ID = "emu-bay-railway-company-1"
+export const GAME_ID = "emu-bay-railway-company-2"
 
 enum CompanyID {
   EB = 0,
