@@ -949,23 +949,22 @@ function TurnNext(G: IEmuBayState, ctx: Ctx): number {
   if (G.firstTurnOfPhase) {
     return G.firstPlayerOfPhase!;
   }
-
-  let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
-
   switch (G.pseudoPhase) {
     case PseudoPhase.InitialAuction:
       {
         if (!G.auctionFinished) {
-          let nextPlayerPos = (playOrderPos + 1) % ctx.numPlayers;
+          let nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
           while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
+            console.log("next player pos", nextPlayerPos);
             nextPlayerPos = (nextPlayerPos + 1) % ctx.numPlayers;
+            console.log("after next player pos", nextPlayerPos);
           }
-          return +ctx.playOrder[nextPlayerPos];
+          return nextPlayerPos;
         }
         else {
           // For some reason, boardgame.io still runs this after phase change - 
           // so go to the sensible thing that it will need next
-          return G.playerAfterPhase!;
+          return ctx.playOrder.indexOf(G.playerAfterPhase!.toString());
         }
       }
 
@@ -973,23 +972,23 @@ function TurnNext(G: IEmuBayState, ctx: Ctx): number {
       switch (G.pseudoStage) {
         case PseudoStage.buildingTrack:
         case PseudoStage.takeResources:
-          return +ctx.playOrder[playOrderPos];
+          return ctx.playOrderPos;
         default:
-          return +ctx.playOrder[(playOrderPos + 1) % ctx.numPlayers];
+          return (ctx.playOrderPos + 1) % ctx.numPlayers;
       }
 
     case PseudoPhase.Auction:
       if (!G.auctionFinished) {
-        var nextPlayerPos = (playOrderPos + 1) % ctx.numPlayers;
+        var nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
         while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
-          nextPlayerPos = (playOrderPos + 1) % ctx.numPlayers;
+          nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
         }
-        return +ctx.playOrder[nextPlayerPos];
+        return nextPlayerPos;
       }
       else {
         // For some reason, boardgame.io still runs this after phase change - 
         // so go to the sensible thing that it will need next
-        return G.playerAfterPhase!;
+        return ctx.playOrder.indexOf(G.playerAfterPhase!.toString());
       }
   }
   // Should never hit
@@ -1069,8 +1068,7 @@ export const EmuBayRailwayCompany = {
 
   turn: {
     order: {
-      // Todo: Fix this
-      first: () => 0,
+      first: (G: IEmuBayState, ctx: Ctx) => Math.floor(ctx.random!.Number() * ctx.numPlayers),
       next: TurnNext
     },
   },
@@ -1117,11 +1115,11 @@ export const EmuBayRailwayCompany = {
       };
       G.turnLog.push(`%P${ctx.currentPlayer} starts building track for %C${company}`);
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
+      ctx.events?.endTurn!();
       G.toAct = company;
       G.buildsRemaining = 3;
       G.anyActionsTaken = false;
-      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
-      G.playerAfterPhase = (playOrderPos + 1) % ctx.numPlayers;
+      G.playerAfterPhase = (ctx.playOrderPos + 1) % ctx.numPlayers;
       G.pseudoStage = PseudoStage.buildingTrack;
     },
 
@@ -1136,8 +1134,7 @@ export const EmuBayRailwayCompany = {
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
       G.toAct = company;
       G.mineLocation = null;
-      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
-      G.playerAfterPhase = (playOrderPos + 1) % ctx.numPlayers;
+      G.playerAfterPhase = (ctx.playOrderPos + 1) % ctx.numPlayers;
       G.pseudoStage = PseudoStage.takeResources;
     },
 
@@ -1148,9 +1145,7 @@ export const EmuBayRailwayCompany = {
       if (jiggleCubes(G, actions.AuctionShare) == INVALID_MOVE) {
         return INVALID_MOVE;
       };
-      // Hack due to weirdness
-      let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
-      G.playerAfterPhase = (playOrderPos + 1) % ctx.numPlayers;
+      G.playerAfterPhase = (ctx.playOrderPos + 1) % ctx.numPlayers;
       G.companyForAuction = company;
       if (G.players[+ctx.currentPlayer].cash < getMinimumBid(G, company)) {
         console.log("Player must be able to pay minimum bid");
@@ -1192,7 +1187,7 @@ export const EmuBayRailwayCompany = {
       G.companies[company].cash += G.bonds[bond].amount;
       G.bonds.splice(bond, 1);
       G.firstTurnOfPhase = false; // Remove after phase bug fixe
-      ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+      ctx.events?.endTurn!();
     },
 
     merge: (G: IEmuBayState, ctx: Ctx, major: number, minor: number) => {
@@ -1234,7 +1229,7 @@ export const EmuBayRailwayCompany = {
       // Close minor
       G.companies[minor].open = false;
       G.firstTurnOfPhase = false; // Remove after phase bug fixe
-      ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+      ctx.events?.endTurn!();
     },
 
     payDividends: (G: IEmuBayState, ctx: Ctx) => {
@@ -1292,7 +1287,7 @@ export const EmuBayRailwayCompany = {
         ctx.events?.endGame!(getEndgameState(G, reasons));
       }
       G.firstTurnOfPhase = false; // Remove after phase bug fixe
-      ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+      ctx.events?.endTurn!();
     },
 
     buildTrack: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates, buildMode: BuildMode) => {
@@ -1359,7 +1354,7 @@ export const EmuBayRailwayCompany = {
       }
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
       StartPhase(PseudoPhase.NormalPlay, G, ctx);
-      ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+      ctx.events?.endTurn!();
     },
 
     takeResource: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates) => {
@@ -1404,7 +1399,7 @@ export const EmuBayRailwayCompany = {
       }
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
       StartPhase(PseudoPhase.NormalPlay, G, ctx);
-      ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+      ctx.events?.endTurn!();
     },
 
     makeBid: (G: IEmuBayState, ctx: Ctx, amount: number) => {
@@ -1426,7 +1421,7 @@ export const EmuBayRailwayCompany = {
             auctionCompanyWon(G, ctx);
           }
         }
-        ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+        ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
       }
       else {
         return INVALID_MOVE;
@@ -1449,6 +1444,7 @@ export const EmuBayRailwayCompany = {
 
       G.passed![+ctx.currentPlayer] = true;
       var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
+      ctx.events!.endTurn!(); // Use MoveLimit when phase bug fixed
       if (biddersRemaining <= 1) {
         if (G.currentBid != 0 || biddersRemaining == 0) {
           // All other players passed and bid made, or all players passed
@@ -1458,8 +1454,7 @@ export const EmuBayRailwayCompany = {
             auctionCompanyWon(G, ctx);
           }
         }
-      };
-      ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+      }
     },
   },
 };

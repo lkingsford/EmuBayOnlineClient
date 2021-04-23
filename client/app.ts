@@ -126,7 +126,7 @@ export class EmuBayRailwayCompanyClient {
     }
 
     private GetStateHistory(): IHistoricState[] {
-        const reducer = CreateGameReducer({ game: EmuBayRailwayCompany, isClient: false });
+        const reducer = CreateGameReducer({ game: EmuBayRailwayCompany });
         const stateSnapshots: IHistoricState[] = [];
         let state: State<IEmuBayState> = this.client.initialState;
 
