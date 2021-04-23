@@ -977,6 +977,14 @@ export const EmuBayRailwayCompany = {
         order: {
           first: (G: IEmuBayState, ctx: Ctx) => Math.floor(ctx.random!.Number() * ctx.numPlayers),
           next: (G: IEmuBayState, ctx: Ctx) => {
+            // boardgame.io still calls 'next' after endTurn({next: ...}) - so need to do this
+            // manually here
+            // This is to set first bidder as last winner for auctions after first
+            let auctionNumber = InitialAuctionOrder.indexOf(G.companyForAuction!);
+            if (auctionNumber > 0 && !G.passed!.some(i=>i) && G.currentBid == 0) {
+              return ctx.playOrder.indexOf(G.companies[InitialAuctionOrder[auctionNumber - 1]].sharesHeld[0].toString());
+            }
+
             var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
             if (!G.auctionFinished) {
               let nextPlayerPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
