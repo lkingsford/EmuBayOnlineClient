@@ -1406,7 +1406,6 @@ export const EmuBayRailwayCompany = {
         return INVALID_MOVE;
       }
       G.firstTurnOfPhase = false; // Remove after phase bug fixed
-      G.mineLocation = null;
       StartPhase(PseudoPhase.NormalPlay, G, ctx);
       ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
     },
