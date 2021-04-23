@@ -73,16 +73,8 @@ export interface IEmuBayState {
   mineLocation?: ICoordinates | null;
   bonds: IBond[];
   toAct?: CompanyID;
-  pseudoStage?: PseudoStage | null;
   turnLog: string[]; // Don't know if this is wise or not (memory wise) but it's here for now
 };
-
-export enum PseudoStage {
-  removeCube,
-  takeAction,
-  buildingTrack,
-  takeResources
-}
 
 export enum EndGameReason {
   quit,
@@ -411,7 +403,7 @@ function companyAccessibleTrack(G: IEmuBayState, company: number): ICoordinates[
   // Annoying narrow
   let connectedNarrow: ICoordinates[] = []
   if (company < 3) {
-    connectedNarrow.push(...G.companies[company].independentsOwned.map((i) => i.home!));
+    connectedNarrow.push(...G.companies[company].independentsOwned.map((i)=>i.home!));
   } else {
     connectedNarrow.push(G.companies[company].home!);
   }
@@ -509,7 +501,7 @@ export function getAllowedBuildSpaces(G: IEmuBayState, buildmode: BuildMode, com
           relevantHomes = [G.companies[company].home!]
         } else {
           // Must have merged in. Need connection to one of its privates
-          relevantHomes = G.companies[company].independentsOwned!.map((i) => i.home!);
+          relevantHomes = G.companies[company].independentsOwned!.map((i)=>i.home!);
         }
 
         // This should be cached - a fair bit of repetition happening here.
@@ -624,144 +616,138 @@ export const InitialAuctionOrder = [CompanyID.LW, CompanyID.TMLC, CompanyID.EB, 
 
 const IndependentStartingRevenue = 3;
 
-function CompanyInitialState(): ICompany[] {
-  return [
-    {
-      // EB
-      cash: 0,
-      trainsRemaining: 4,
-      narrowGaugeRemaining: 0,
-      resourcesHeld: 0,
-      currentRevenue: 1,
-      bonds: [],
-      sharesHeld: [],
-      sharesRemaining: 2,
-      reservedSharesRemaining: 4,
-      home: { x: 2, y: 3 },
-      independentsOwned: [],
-      companyType: CompanyType.Major,
-      open: true,
-      id: 0,
-    },
-    {
-      // TMLC
-      cash: 0,
-      trainsRemaining: 8,
-      narrowGaugeRemaining: 0,
-      resourcesHeld: 0,
-      currentRevenue: 2,
-      bonds: [],
-      sharesHeld: [],
-      sharesRemaining: 4,
-      reservedSharesRemaining: 0,
-      home: { x: 7, y: 3 },
-      independentsOwned: [],
-      companyType: CompanyType.Major,
-      open: true,
-      id: 1,
-    },
-    {
-      // LW
-      cash: 0,
-      trainsRemaining: 7,
-      narrowGaugeRemaining: 0,
-      resourcesHeld: 0,
-      currentRevenue: 2,
-      bonds: [],
-      sharesHeld: [],
-      sharesRemaining: 3,
-      reservedSharesRemaining: 0,
-      home: { x: 7, y: 3 },
-      independentsOwned: [],
-      companyType: CompanyType.Major,
-      open: true,
-      id: 2,
-    },
-    {
-      // GT
-      cash: 10,
-      trainsRemaining: 0,
-      narrowGaugeRemaining: 2,
-      resourcesHeld: 0,
-      currentRevenue: IndependentStartingRevenue,
-      bonds: [{ deferred: true, amount: 10, baseInterest: 3, interestDelta: 1 }],
-      sharesHeld: [],
-      sharesRemaining: 1,
-      reservedSharesRemaining: 0,
-      independentsOwned: [],
-      companyType: CompanyType.Minor,
-      open: true,
-      id: 3,
-    },
-    {
-      // MLM
-      cash: 15,
-      trainsRemaining: 0,
-      narrowGaugeRemaining: 3,
-      resourcesHeld: 0,
-      currentRevenue: IndependentStartingRevenue,
-      bonds: [{ deferred: true, amount: 15, baseInterest: 4, interestDelta: 1 }],
-      sharesHeld: [],
-      sharesRemaining: 1,
-      reservedSharesRemaining: 0,
-      independentsOwned: [],
-      companyType: CompanyType.Minor,
-      open: false,
-      id: 4,
-    },
-    {
-      // NED
-      cash: 15,
-      trainsRemaining: 0,
-      narrowGaugeRemaining: 3,
-      resourcesHeld: 0,
-      currentRevenue: IndependentStartingRevenue,
-      bonds: [{ deferred: true, amount: 15, baseInterest: 6, interestDelta: 1 }],
-      sharesHeld: [],
-      sharesRemaining: 1,
-      reservedSharesRemaining: 0,
-      independentsOwned: [],
-      companyType: CompanyType.Minor,
-      open: false,
-      id: 5,
-    },
-    {
-      // NMF
-      cash: 15,
-      trainsRemaining: 0,
-      narrowGaugeRemaining: 4,
-      resourcesHeld: 0,
-      currentRevenue: IndependentStartingRevenue,
-      bonds: [{ deferred: true, amount: 15, baseInterest: 7, interestDelta: 1 }],
-      sharesHeld: [],
-      sharesRemaining: 1,
-      reservedSharesRemaining: 0,
-      independentsOwned: [],
-      companyType: CompanyType.Minor,
-      open: false,
-      id: 6,
-    },
-  ]
-};
+function CompanyInitialState(): ICompany[] { return [
+  {
+    // EB
+    cash: 0,
+    trainsRemaining: 4,
+    narrowGaugeRemaining: 0,
+    resourcesHeld: 0,
+    currentRevenue: 1,
+    bonds: [],
+    sharesHeld: [],
+    sharesRemaining: 2,
+    reservedSharesRemaining: 4,
+    home: { x: 2, y: 3 },
+    independentsOwned: [],
+    companyType: CompanyType.Major,
+    open: true,
+    id: 0,
+  },
+  {
+    // TMLC
+    cash: 0,
+    trainsRemaining: 8,
+    narrowGaugeRemaining: 0,
+    resourcesHeld: 0,
+    currentRevenue: 2,
+    bonds: [],
+    sharesHeld: [],
+    sharesRemaining: 4,
+    reservedSharesRemaining: 0,
+    home: { x: 7, y: 3 },
+    independentsOwned: [],
+    companyType: CompanyType.Major,
+    open: true,
+    id: 1,
+  },
+  {
+    // LW
+    cash: 0,
+    trainsRemaining: 7,
+    narrowGaugeRemaining: 0,
+    resourcesHeld: 0,
+    currentRevenue: 2,
+    bonds: [],
+    sharesHeld: [],
+    sharesRemaining: 3,
+    reservedSharesRemaining: 0,
+    home: { x: 7, y: 3 },
+    independentsOwned: [],
+    companyType: CompanyType.Major,
+    open: true,
+    id: 2,
+  },
+  {
+    // GT
+    cash: 10,
+    trainsRemaining: 0,
+    narrowGaugeRemaining: 2,
+    resourcesHeld: 0,
+    currentRevenue: IndependentStartingRevenue,
+    bonds: [{ deferred: true, amount: 10, baseInterest: 3, interestDelta: 1 }],
+    sharesHeld: [],
+    sharesRemaining: 1,
+    reservedSharesRemaining: 0,
+    independentsOwned: [],
+    companyType: CompanyType.Minor,
+    open: true,
+    id: 3,
+  },
+  {
+    // MLM
+    cash: 15,
+    trainsRemaining: 0,
+    narrowGaugeRemaining: 3,
+    resourcesHeld: 0,
+    currentRevenue: IndependentStartingRevenue,
+    bonds: [{ deferred: true, amount: 15, baseInterest: 4, interestDelta: 1 }],
+    sharesHeld: [],
+    sharesRemaining: 1,
+    reservedSharesRemaining: 0,
+    independentsOwned: [],
+    companyType: CompanyType.Minor,
+    open: false,
+    id: 4,
+  },
+  {
+    // NED
+    cash: 15,
+    trainsRemaining: 0,
+    narrowGaugeRemaining: 3,
+    resourcesHeld: 0,
+    currentRevenue: IndependentStartingRevenue,
+    bonds: [{ deferred: true, amount: 15, baseInterest: 6, interestDelta: 1 }],
+    sharesHeld: [],
+    sharesRemaining: 1,
+    reservedSharesRemaining: 0,
+    independentsOwned: [],
+    companyType: CompanyType.Minor,
+    open: false,
+    id: 5,
+  },
+  {
+    // NMF
+    cash: 15,
+    trainsRemaining: 0,
+    narrowGaugeRemaining: 4,
+    resourcesHeld: 0,
+    currentRevenue: IndependentStartingRevenue,
+    bonds: [{ deferred: true, amount: 15, baseInterest: 7, interestDelta: 1 }],
+    sharesHeld: [],
+    sharesRemaining: 1,
+    reservedSharesRemaining: 0,
+    independentsOwned: [],
+    companyType: CompanyType.Minor,
+    open: false,
+    id: 6,
+  },
+] };
 
-function initialAvailableBonds(): IBond[] {
-  return [
-    { deferred: true, amount: 10, baseInterest: 6, interestDelta: 1 },
-    { deferred: true, amount: 20, baseInterest: 7, interestDelta: 2 },
-    { deferred: true, amount: 20, baseInterest: 8, interestDelta: 2 },
-    { deferred: true, amount: 30, baseInterest: 9, interestDelta: 2 },
-    { deferred: true, amount: 30, baseInterest: 10, interestDelta: 2 },
-  ]
-};
+function initialAvailableBonds(): IBond[] { return [
+  { deferred: true, amount: 10, baseInterest: 6, interestDelta: 1 },
+  { deferred: true, amount: 20, baseInterest: 7, interestDelta: 2 },
+  { deferred: true, amount: 20, baseInterest: 8, interestDelta: 2 },
+  { deferred: true, amount: 30, baseInterest: 9, interestDelta: 2 },
+  { deferred: true, amount: 30, baseInterest: 10, interestDelta: 2 },
+] };
 
 // Bonds that are randomly given to the 3 companies
-function startingBonds(): IBond[] {
-  return [
-    { deferred: true, amount: 0, baseInterest: 0, interestDelta: 0 },
-    { deferred: true, amount: 10, baseInterest: 5, interestDelta: 1 },
-    { deferred: true, amount: 15, baseInterest: 5, interestDelta: 2 },
-  ]
-};
+function startingBonds(): IBond[] { return [
+  { deferred: true, amount: 0, baseInterest: 0, interestDelta: 0 },
+  { deferred: true, amount: 10, baseInterest: 5, interestDelta: 1 },
+  { deferred: true, amount: 15, baseInterest: 5, interestDelta: 2 },
+] };
 
 const SETUP_CARDS = [
   // C N NE SE S SW NW
@@ -888,13 +874,13 @@ export function activeEndGameConditions(G: IEmuBayState): EndGameReason[] {
   var majorsWithoutTrack = G.companies.filter((i) => i.companyType == CompanyType.Major)
     .filter((i) => (i.trainsRemaining + i.narrowGaugeRemaining) == 0)
     .length;
-  var minorHasNoTrack = G.companies.filter((i) => i.companyType == CompanyType.Minor)
-    .reduce<number>((last, i) => last + i.narrowGaugeRemaining, 0) == 0;
+  var minorHasNoTrack = G.companies.filter((i)=>i.companyType == CompanyType.Minor)
+  .reduce<number>((last, i)=>last + i.narrowGaugeRemaining, 0) == 0;
   var chartersWithoutTrack = majorsWithoutTrack + (minorHasNoTrack ? 1 : 0);
   if (chartersWithoutTrack >= 3) {
     reasons.push(EndGameReason.track);
   }
-
+  
   if (G.resourceCubes.length <= 3) {
     reasons.push(EndGameReason.resource);
   }
@@ -980,7 +966,6 @@ export const EmuBayRailwayCompany = {
         G.winningBidder = 0;
         G.auctionFinished = false;
       },
-
       turn: {
         moveLimit: 1,
         order: {
@@ -1004,7 +989,6 @@ export const EmuBayRailwayCompany = {
           }
         }
       },
-
       moves: {
         makeBid: (G: IEmuBayState, ctx: Ctx, amount: number) => {
           if (amount >= getMinimumBid(G, G.companyForAuction!) && amount > G.currentBid!) {
@@ -1019,7 +1003,6 @@ export const EmuBayRailwayCompany = {
             return INVALID_MOVE;
           }
         },
-        
         pass: (G: IEmuBayState, ctx: Ctx) => {
           G.passed![+ctx.currentPlayer] = true;
           var biddersRemaining = G.passed!.reduce<number>((last: number, current: boolean): number => last - (current ? 1 : 0), ctx.numPlayers);
@@ -1032,7 +1015,6 @@ export const EmuBayRailwayCompany = {
         },
       },
     },
-
     normalPlay: {
       turn: {
         order: {
@@ -1043,300 +1025,282 @@ export const EmuBayRailwayCompany = {
           next: (G: IEmuBayState, ctx: Ctx) => (ctx.playOrderPos + 1) % ctx.numPlayers
         },
         onBegin: (G: IEmuBayState, ctx: Ctx) => {
-          G.pseudoStage = PseudoStage.removeCube;
-          G.anyActionsTaken = false;
-        },
-      },
-
-      moves: {
-        removeCube: (G: IEmuBayState, ctx: Ctx, action: actions) => {
-          if (G.pseudoStage != PseudoStage.removeCube) {
-            return INVALID_MOVE;
-          }
-
-          let filledSpaces =
-            ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
-              .filter(v => v.value == action)
-              .filter(v => G.actionCubeLocations[v.idx] == true);
-          let filledSpaceCount = filledSpaces.length;
-          if (filledSpaceCount == 0) {
-            console.log("No cube to remove")
-            return INVALID_MOVE;
-          }
-          // Remove a cube to place
-          G.actionCubeTakenFrom = action;
-          G.actionCubeLocations[filledSpaces[0].idx] = false;
-          G.pseudoStage = PseudoStage.takeAction;
-        },
-
-        declareStalemate: (G: IEmuBayState, ctx: Ctx) => {
-          if (stalemateAvailable(G, ctx)) {
-            ctx.events!.endGame!(getEndgameState(G, [EndGameReason.stalemate]));
-          }
-          var availableSpaces = ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
-            .filter(v => G.actionCubeLocations[v.idx] == false);
-        },
-
-        buildTrackAction: (G: IEmuBayState, ctx: Ctx, company: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.BuildTrack) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          G.toAct = company;
-          G.buildsRemaining = 3;
-          G.anyActionsTaken = false;
-          G.pseudoStage = PseudoStage.buildingTrack;
-        },
-
-        mineResource: (G: IEmuBayState, ctx: Ctx, company: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.TakeResources) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          G.toAct = company;
-          G.mineLocation = null;
-          G.pseudoStage = PseudoStage.takeResources;
-        },
-
-        auctionShare: (G: IEmuBayState, ctx: Ctx, company: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.AuctionShare) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          G.playerAfterAuction = (ctx.playOrderPos + 1) % ctx.numPlayers;
-          G.companyForAuction = company;
-          if (G.players[+ctx.currentPlayer].cash < getMinimumBid(G, company)) {
-            console.log("Player must be able to pay minimum bid");
-            return INVALID_MOVE;
-          }
-          if (G.companies[company].sharesRemaining <= 0) {
-            console.log("No shares remaining");
-            return INVALID_MOVE;
-          }
-          // Check that it's the next independent available if it's independent
-          if (G.companies[company].companyType == CompanyType.Minor) {
-            if ((G.independentOrder.length == 0) || (company != G.independentOrder[0])) {
-              console.log("Independent not available");
-            }
-          }
-
-          G.playerInitialBidder = +ctx.currentPlayer;
-
-          ctx.events?.setPhase!("auction");
-        },
-
-        issueBond: (G: IEmuBayState, ctx: Ctx, company: number, bond: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.IssueBond) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-
-          G.companies[company].bonds.push(G.bonds[bond]);
-          G.companies[company].cash += G.bonds[bond].amount;
-          G.bonds.splice(bond, 1);
-          ctx.events?.endTurn!();
-        },
-
-        merge: (G: IEmuBayState, ctx: Ctx, major: number, minor: number) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.Merge) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-
-          if (getMergableCompanies(G, ctx).find((i) => i.major == major && i.minor == minor) == undefined) {
-            console.log("Merge is invalid")
-            return INVALID_MOVE;
-          }
-
-          // Exchange shares
-          G.companies[major].sharesHeld.push(G.companies[minor].sharesHeld[0]);
-          G.companies[minor].sharesHeld = [];
-          if (G.companies[major].reservedSharesRemaining > 0) {
-            G.companies[major].reservedSharesRemaining -= 1;
-          } else {
-            G.companies[major].sharesRemaining -= 1;
-            // Special rule for Emu Bay: When any other company is merged in,
-            // EB reserved share becomes regular share
-            G.companies[CompanyID.EB].sharesRemaining += 1;
-            G.companies[CompanyID.EB].reservedSharesRemaining -= 1;
-          }
-
-          // Merge stuff in
-          G.companies[major].bonds.push(...G.companies[minor].bonds);
-          G.companies[major].cash += G.companies[minor].cash;
-          G.companies[major].currentRevenue += G.companies[minor].currentRevenue;
-          G.companies[major].resourcesHeld += G.companies[minor].resourcesHeld;
-          G.companies[major].narrowGaugeRemaining += G.companies[minor].narrowGaugeRemaining;
-          G.companies[major].independentsOwned.push(G.companies[minor]);
-
-          // Close minor
-          G.companies[minor].open = false;
-
-          ctx.events?.endTurn!();
-        },
-
-        payDividends: (G: IEmuBayState, ctx: Ctx) => {
-          if (G.pseudoStage != PseudoStage.takeAction) {
-            return INVALID_MOVE;
-          };
-          if (jiggleCubes(G, actions.PayDividend) == INVALID_MOVE) {
-            return INVALID_MOVE;
-          };
-          // Pay dividends
-          G.companies.forEach((co) => {
-            let amount = co.currentRevenue > 0 ? Math.ceil(co.currentRevenue / co.sharesHeld.length) : Math.floor(co.currentRevenue / co.sharesHeld.length);
-            co.sharesHeld.forEach((n) => {
-              G.players[n].cash += amount;
-              console.log(n, " payed ", amount, "for", co)
-            });
-
-            // Adjust non-deferred debt
-            let debtChange = co.bonds.filter((i) => !i.deferred).reduce<number>((p, i) => i.interestDelta + p, 0)
-            co.currentRevenue -= debtChange;
-            console.log(co, " revenue reduced by ", debtChange)
-
-            // Increase debt for each deferred
-            co.bonds.filter((i) => i.deferred).forEach((i) => {
-              co.currentRevenue -= i.baseInterest;
-              console.log(co, " revenue reduced by ", i.baseInterest, " following undefferal")
-              i.deferred = false;
-            });
-          })
-
-          // Check for bankruptcy
-          if (G.players.some((i) => i.cash < 0)) {
-            ctx.events?.endGame!(getEndgameState(G, [EndGameReason.bankruptcy]));
-          }
-
-          // Check for other end game conditions
-          let reasons: EndGameReason[] = activeEndGameConditions(G);
-          if (reasons.length >= 2) {
-            ctx.events?.endGame!(getEndgameState(G, reasons));
-          }
-
-          ctx.events?.endTurn!();
-        },
-
-        buildTrack: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates, buildMode: BuildMode) => {
-          // Must have track remaining
-          if (G.pseudoStage != PseudoStage.buildingTrack) {
-            return INVALID_MOVE;
-          };
-          if (buildMode == BuildMode.Normal) {
-            if (G.companies[G.toAct!].trainsRemaining == 0) {
-              return INVALID_MOVE;
-            }
-          } else {
-            if (G.companies[G.toAct!].narrowGaugeRemaining == 0) {
-              return INVALID_MOVE;
-            }
-          }
-
-          // Must have build remaining
-          if (G.buildsRemaining! <= 0) {
-            return INVALID_MOVE;
-          }
-
-          // Must be in permitted space
-          let allowed = getAllowedBuildSpaces(G, buildMode, G.toAct!);
-          let thisSpace = allowed.find((i) => i.x == xy.x && i.y == xy.y);
-          if (!thisSpace) {
-            return INVALID_MOVE;
-          };
-
-          if (G.companies[G.toAct!].cash < thisSpace.cost) {
-            return INVALID_MOVE;
-          }
-          G.companies[G.toAct!].cash -= thisSpace.cost;
-          G.companies[G.toAct!].currentRevenue += thisSpace.rev;
-
-          G.track.push({
-            x: xy.x,
-            y: xy.y,
-            narrow: buildMode == BuildMode.Narrow,
-            owner: buildMode == BuildMode.Normal ? G.toAct! : undefined
+          ctx.events!.setStage!("removeCube");
+          // Had to do this, as active player was regularly wrong
+          ctx.events?.setActivePlayers!({
+            currentPlayer: { stage: "removeCube", moveLimit: 1 }
           });
-          if (buildMode == BuildMode.Normal) {
-            G.companies[G.toAct!].trainsRemaining -= 1;
-          }
-          else {
-            G.companies[G.toAct!].narrowGaugeRemaining -= 1;
-          }
-          G.anyActionsTaken = true;
-          G.buildsRemaining! -= 1;
+          G.anyActionsTaken = false;
         },
+        stages: {
+          removeCube: {
+            moves: {
+              removeCube: (G: IEmuBayState, ctx: Ctx, action: actions) => {
+                let filledSpaces =
+                  ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
+                    .filter(v => v.value == action)
+                    .filter(v => G.actionCubeLocations[v.idx] == true);
+                let filledSpaceCount = filledSpaces.length;
+                if (filledSpaceCount == 0) {
+                  console.log("No cube to remove")
+                  return INVALID_MOVE;
+                }
+                // Remove a cube to place
+                G.actionCubeTakenFrom = action;
+                G.actionCubeLocations[filledSpaces[0].idx] = false;
+                ctx.events?.setStage!("takeAction");
+              },
 
-        doneBuilding: (G: IEmuBayState, ctx: Ctx) => {
-          if (G.pseudoStage != PseudoStage.buildingTrack) {
-            return INVALID_MOVE;
-          };
-          if (!G.anyActionsTaken) {
-            console.log("No track built - can't pass");
-            return INVALID_MOVE;
-          }
-          ctx.events?.endTurn!();
+              declareStalemate: (G: IEmuBayState, ctx: Ctx) => {
+                if (stalemateAvailable(G, ctx)) {
+                  ctx.events!.endGame!(getEndgameState(G, [EndGameReason.stalemate]));
+                }
+                var availableSpaces = ACTION_CUBE_LOCATION_ACTIONS.map((v, i) => ({ value: v, idx: i }))
+                  .filter(v => G.actionCubeLocations[v.idx] == false);
+
+              }
+            },
+            turn: {
+              moveLimit: 1
+            },
+          },
+          takeAction: {
+            moves: {
+              buildTrack: (G: IEmuBayState, ctx: Ctx, company: number) => {
+                if (jiggleCubes(G, actions.BuildTrack) == INVALID_MOVE) {
+                  return INVALID_MOVE;
+                };
+                G.toAct = company;
+                G.buildsRemaining = 3;
+                G.anyActionsTaken = false;
+                ctx.events?.setStage!("buildingTrack");
+              },
+              mineResource: (G: IEmuBayState, ctx: Ctx, company: number) => {
+                if (jiggleCubes(G, actions.TakeResources) == INVALID_MOVE) {
+                  return INVALID_MOVE;
+                };
+                G.toAct = company;
+                G.mineLocation = null;
+                ctx.events?.setStage!("takeResources");
+              },
+              auctionShare: (G: IEmuBayState, ctx: Ctx, company: number) => {
+                if (jiggleCubes(G, actions.AuctionShare) == INVALID_MOVE) {
+                  return INVALID_MOVE;
+                };
+                G.playerAfterAuction = (ctx.playOrderPos + 1) % ctx.numPlayers;
+                G.companyForAuction = company;
+                if (G.players[+ctx.currentPlayer].cash < getMinimumBid(G, company)) {
+                  console.log("Player must be able to pay minimum bid");
+                  return INVALID_MOVE;
+                }
+                if (G.companies[company].sharesRemaining <= 0) {
+                  console.log("No shares remaining");
+                  return INVALID_MOVE;
+                }
+                // Check that it's the next independent available if it's independent
+                if (G.companies[company].companyType == CompanyType.Minor) {
+                  if ((G.independentOrder.length == 0) || (company != G.independentOrder[0])) {
+                    console.log("Independent not available");
+                  }
+                }
+
+                G.playerInitialBidder = +ctx.currentPlayer;
+
+                ctx.events?.setPhase!("auction");
+              },
+
+              issueBond: (G: IEmuBayState, ctx: Ctx, company: number, bond: number) => {
+                if (jiggleCubes(G, actions.IssueBond) == INVALID_MOVE) {
+                  return INVALID_MOVE;
+                };
+                G.companies[company].bonds.push(G.bonds[bond]);
+                G.companies[company].cash += G.bonds[bond].amount;
+                G.bonds.splice(bond, 1);
+                ctx.events?.endTurn!();
+              },
+
+              merge: (G: IEmuBayState, ctx: Ctx, major: number, minor: number) => {
+                if (jiggleCubes(G, actions.Merge) == INVALID_MOVE) {
+                  return INVALID_MOVE;
+                };
+
+                if (getMergableCompanies(G, ctx).find((i) => i.major == major && i.minor == minor) == undefined) {
+                  console.log("Merge is invalid")
+                  return INVALID_MOVE;
+                }
+
+                // Exchange shares
+                G.companies[major].sharesHeld.push(G.companies[minor].sharesHeld[0]);
+                G.companies[minor].sharesHeld = [];
+                if (G.companies[major].reservedSharesRemaining > 0) {
+                  G.companies[major].reservedSharesRemaining -= 1;
+                } else {
+                  G.companies[major].sharesRemaining -= 1;
+                  // Special rule for Emu Bay: When any other company is merged in,
+                  // EB reserved share becomes regular share
+                  G.companies[CompanyID.EB].sharesRemaining += 1;
+                  G.companies[CompanyID.EB].reservedSharesRemaining -= 1;
+                }
+
+                // Merge stuff in
+                G.companies[major].bonds.push(...G.companies[minor].bonds);
+                G.companies[major].cash += G.companies[minor].cash;
+                G.companies[major].currentRevenue += G.companies[minor].currentRevenue;
+                G.companies[major].resourcesHeld += G.companies[minor].resourcesHeld;
+                G.companies[major].narrowGaugeRemaining += G.companies[minor].narrowGaugeRemaining;
+                G.companies[major].independentsOwned.push(G.companies[minor]);
+
+                // Close minor
+                G.companies[minor].open = false;
+
+                ctx.events?.endTurn!();
+              },
+
+              payDividends: (G: IEmuBayState, ctx: Ctx) => {
+                if (jiggleCubes(G, actions.PayDividend) == INVALID_MOVE) {
+                  return INVALID_MOVE;
+                };
+                // Pay dividends
+                G.companies.forEach((co) => {
+                  let amount = co.currentRevenue > 0 ? Math.ceil(co.currentRevenue / co.sharesHeld.length) : Math.floor(co.currentRevenue / co.sharesHeld.length);
+                  co.sharesHeld.forEach((n) => {
+                    G.players[n].cash += amount;
+                    console.log(n, " payed ", amount, "for", co)
+                  });
+
+                  // Adjust non-deferred debt
+                  let debtChange = co.bonds.filter((i) => !i.deferred).reduce<number>((p, i) => i.interestDelta + p, 0)
+                  co.currentRevenue -= debtChange;
+                  console.log(co, " revenue reduced by ", debtChange)
+
+                  // Increase debt for each deferred
+                  co.bonds.filter((i) => i.deferred).forEach((i) => {
+                    co.currentRevenue -= i.baseInterest;
+                    console.log(co, " revenue reduced by ", i.baseInterest, " following undefferal")
+                    i.deferred = false;
+                  });
+                })
+
+                // Check for bankruptcy
+                if (G.players.some((i) => i.cash < 0)) {
+                  ctx.events?.endGame!(getEndgameState(G, [EndGameReason.bankruptcy]));
+                }
+
+                // Check for other end game conditions
+                let reasons: EndGameReason[] = activeEndGameConditions(G);
+                if (reasons.length >= 2) {
+                  ctx.events?.endGame!(getEndgameState(G, reasons));
+                }
+
+                ctx.events?.endTurn!();
+              },
+            },
+            turn: {
+              moveLimit: 1
+            }
+          },
+          buildingTrack: {
+            moves: {
+              buildTrack: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates, buildMode: BuildMode) => {
+                // Must have track remaining
+                if (buildMode == BuildMode.Normal) {
+                  if (G.companies[G.toAct!].trainsRemaining == 0) {
+                    return INVALID_MOVE;
+                  }
+                } else {
+                  if (G.companies[G.toAct!].narrowGaugeRemaining == 0) {
+                    return INVALID_MOVE;
+                  }
+                }
+
+                // Must have build remaining
+                if (G.buildsRemaining! <= 0) {
+                  return INVALID_MOVE;
+                }
+
+                // Must be in permitted space
+                let allowed = getAllowedBuildSpaces(G, buildMode, G.toAct!);
+                let thisSpace = allowed.find((i) => i.x == xy.x && i.y == xy.y);
+                if (!thisSpace) {
+                  return INVALID_MOVE;
+                };
+
+                if (G.companies[G.toAct!].cash < thisSpace.cost) {
+                  return INVALID_MOVE;
+                }
+                G.companies[G.toAct!].cash -= thisSpace.cost;
+                G.companies[G.toAct!].currentRevenue += thisSpace.rev;
+
+                G.track.push({
+                  x: xy.x,
+                  y: xy.y,
+                  narrow: buildMode == BuildMode.Narrow,
+                  owner: buildMode == BuildMode.Normal ? G.toAct! : undefined
+                });
+                if (buildMode == BuildMode.Normal) {
+                  G.companies[G.toAct!].trainsRemaining -= 1;
+                }
+                else {
+                  G.companies[G.toAct!].narrowGaugeRemaining -= 1;
+                }
+                G.anyActionsTaken = true;
+                G.buildsRemaining! -= 1;
+              },
+
+              doneBuilding: (G: IEmuBayState, ctx: Ctx) => {
+                if (!G.anyActionsTaken) {
+                  console.log("No track built - can't pass");
+                  return INVALID_MOVE;
+                }
+                ctx.events?.endTurn!();
+              }
+            },
+            turn: {
+              moveLimit: 3
+            },
+          },
+          takeResources: {
+            moves: {
+              takeResource: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates) => {
+                if (!getTakeResourceSpaces(G, G.toAct!).find((i) => i.x == xy.x && i.y == xy.y)) {
+                  console.log("Can't take from location");
+                  return INVALID_MOVE;
+                }
+                // Remove resource cube from space
+                G.resourceCubes.splice(
+                  G.resourceCubes.findIndex((i) => i.x == xy.x && i.y == xy.y), 1
+                )
+
+                G.mineLocation = xy;
+
+                // Pay to remove resource cube
+                let co = G.companies[G.toAct!];
+                co.cash -= resourceCubeCost(G);
+
+                // Increase revenue
+                co.currentRevenue += resourceCubeRevenue(G, G.toAct!);
+
+                co.resourcesHeld += 1;
+
+                G.anyActionsTaken = true;
+              },
+              doneTaking: (G: IEmuBayState, ctx: Ctx) => {
+                if (!G.anyActionsTaken) {
+                  console.log("No resources taken - can't pass");
+                  return INVALID_MOVE;
+                }
+                ctx.events?.endTurn!();
+              }
+            },
+            turn: {
+              moveLimit: 3
+            },
+            next: "takeAction"
+          },
         }
-      },
+      }
     },
-
-    takeResources: {
-      moves: {
-        takeResource: (G: IEmuBayState, ctx: Ctx, xy: ICoordinates) => {
-          if (G.pseudoStage != PseudoStage.takeResources) {
-            return INVALID_MOVE;
-          };
-          if (!getTakeResourceSpaces(G, G.toAct!).find((i) => i.x == xy.x && i.y == xy.y)) {
-            console.log("Can't take from location");
-            return INVALID_MOVE;
-          }
-
-          // Remove resource cube from space
-          G.resourceCubes.splice(
-            G.resourceCubes.findIndex((i) => i.x == xy.x && i.y == xy.y), 1
-          )
-
-          G.mineLocation = xy;
-
-          // Pay to remove resource cube
-          let co = G.companies[G.toAct!];
-          co.cash -= resourceCubeCost(G);
-
-          // Increase revenue
-          co.currentRevenue += resourceCubeRevenue(G, G.toAct!);
-
-          co.resourcesHeld += 1;
-
-          G.anyActionsTaken = true;
-        },
-
-        doneTaking: (G: IEmuBayState, ctx: Ctx) => {
-          if (G.pseudoStage != PseudoStage.takeResources) {
-            return INVALID_MOVE;
-          };
-          if (!G.anyActionsTaken) {
-            console.log("No resources taken - can't pass");
-            return INVALID_MOVE;
-          }
-          ctx.events?.endTurn!();
-        }
-      },
-      turn: {
-        moveLimit: 3
-      },
-      next: "takeAction"
-    },
-
-    auction: {
+    "auction": {
       // There is more copy paste here than there should be
       onBegin: (G: IEmuBayState, ctx: Ctx) => {
         G.passed = new Array(ctx.numPlayers).fill(false);

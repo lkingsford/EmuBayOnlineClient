@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js'
 import * as State from './state'
 import {
     IEmuBayState, MAP, ICoordinates, getAllowedBuildSpaces, getTakeResourceSpaces,
-    resourceCubeCost, resourceCubeRevenue, BuildMode, PseudoStage
+    resourceCubeCost, resourceCubeRevenue, BuildMode
 } from '../game/game'
 
 import { Ctx } from 'boardgame.io';
@@ -169,7 +169,10 @@ export class Board extends State.State {
             });
         });
 
-        let stage = gamestate.pseudoStage;
+        let stage = "nostage";
+        if (ctx.activePlayers) {
+            stage = ctx.activePlayers![+ctx.currentPlayer];
+        }
 
         let costStyle = new PIXI.TextStyle();
         costStyle.fill = "#ff0000";
@@ -185,7 +188,7 @@ export class Board extends State.State {
         revStyle.fontWeight = "bold";
         revStyle.fontSize = 38;
 
-        if (stage == PseudoStage.buildingTrack) {
+        if (stage == "buildingTrack") {
             if (gamestate.buildsRemaining! > 0) {
                 let allowedSpaces = getAllowedBuildSpaces(gamestate, this.buildMode!, gamestate.toAct!);
                 allowedSpaces.forEach((xy) => {
@@ -215,7 +218,7 @@ export class Board extends State.State {
             }
         }
 
-        if (stage == PseudoStage.takeResources) {
+        if (stage == "takeResources") {
             let cost = resourceCubeCost(gamestate);
             let rev = resourceCubeRevenue(gamestate, gamestate.toAct!);
 
