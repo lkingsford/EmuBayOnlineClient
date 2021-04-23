@@ -1191,8 +1191,7 @@ export const EmuBayRailwayCompany = {
       G.companies[company].bonds.push(G.bonds[bond]);
       G.companies[company].cash += G.bonds[bond].amount;
       G.bonds.splice(bond, 1);
-      G.firstTurnOfPhase = false; // Remove after phase bug fixed
-      G.pseudoStage = PseudoStage.removeCube;
+      G.firstTurnOfPhase = false; // Remove after phase bug fixe
       ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
     },
 
@@ -1234,8 +1233,7 @@ export const EmuBayRailwayCompany = {
 
       // Close minor
       G.companies[minor].open = false;
-      G.firstTurnOfPhase = false; // Remove after phase bug fixed
-      G.pseudoStage = PseudoStage.removeCube;
+      G.firstTurnOfPhase = false; // Remove after phase bug fixe
       ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
     },
 
@@ -1293,8 +1291,7 @@ export const EmuBayRailwayCompany = {
       if (reasons.length >= 2) {
         ctx.events?.endGame!(getEndgameState(G, reasons));
       }
-      G.firstTurnOfPhase = false; // Remove after phase bug fixed
-      G.pseudoStage = PseudoStage.removeCube;
+      G.firstTurnOfPhase = false; // Remove after phase bug fixe
       ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
     },
 
