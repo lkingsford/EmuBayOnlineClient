@@ -335,7 +335,7 @@ function initialAuctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
     G.currentBid = 0;
     G.passed = new Array(ctx.numPlayers).fill(false);
     G.turnLog.push(`!%C${G.companyForAuction} for auction`);
-    ctx.events!.endTurn!({ next: G.winningBidder });
+    ctx.events!.endTurn!({ next: G.winningBidder!.toString() });
     return;
   }
   G.playerAfterPhase = G.companies[CompanyID.GT].sharesHeld[0];
@@ -357,7 +357,7 @@ function auctionCompanyWon(G: IEmuBayState, ctx: Ctx) {
     G.independentOrder.splice(0, 1);
   }
   StartPhase(PseudoPhase.NormalPlay, G, ctx);
-  ctx.events!.endTurn!({ next: G.playerAfterPhase });
+  ctx.events!.endTurn!({ next: G.playerAfterPhase!.toString() });
 }
 
 function jiggleCubes(G: IEmuBayState, actionToTake: actions): string | void {
@@ -944,10 +944,10 @@ function StartPhase(phase: PseudoPhase, G: IEmuBayState, ctx: Ctx) {
   }
 }
 
-function TurnNext(G: IEmuBayState, ctx: Ctx): number {
+function TurnNext(G: IEmuBayState, ctx: Ctx): string {
   // This should be removed when the boardgame.io phase bug is fixed
   if (G.firstTurnOfPhase) {
-    return G.firstPlayerOfPhase!;
+    return G.firstPlayerOfPhase!.toString();
   }
 
   let playOrderPos = (ctx.playOrderPos >= 0) ? ctx.playOrderPos : ctx.playOrder.findIndex(i => i == ctx.currentPlayer.toString());
@@ -960,12 +960,12 @@ function TurnNext(G: IEmuBayState, ctx: Ctx): number {
           while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
             nextPlayerPos = (nextPlayerPos + 1) % ctx.numPlayers;
           }
-          return +ctx.playOrder[nextPlayerPos];
+          return ctx.playOrder[nextPlayerPos].toString();
         }
         else {
           // For some reason, boardgame.io still runs this after phase change - 
           // so go to the sensible thing that it will need next
-          return G.playerAfterPhase!;
+          return G.playerAfterPhase!.toString();
         }
       }
 
@@ -973,9 +973,9 @@ function TurnNext(G: IEmuBayState, ctx: Ctx): number {
       switch (G.pseudoStage) {
         case PseudoStage.buildingTrack:
         case PseudoStage.takeResources:
-          return +ctx.playOrder[playOrderPos];
+          return ctx.playOrder[playOrderPos].toString();
         default:
-          return +ctx.playOrder[(playOrderPos + 1) % ctx.numPlayers];
+          return ctx.playOrder[(playOrderPos + 1) % ctx.numPlayers].toString();
       }
 
     case PseudoPhase.Auction:
@@ -984,12 +984,12 @@ function TurnNext(G: IEmuBayState, ctx: Ctx): number {
         while (G.passed![+ctx.playOrder[nextPlayerPos]]) {
           nextPlayerPos = (playOrderPos + 1) % ctx.numPlayers;
         }
-        return +ctx.playOrder[nextPlayerPos];
+        return ctx.playOrder[nextPlayerPos].toString();
       }
       else {
         // For some reason, boardgame.io still runs this after phase change - 
         // so go to the sensible thing that it will need next
-        return G.playerAfterPhase!;
+        return G.playerAfterPhase!.toString();
       }
   }
   // Should never hit
@@ -1258,8 +1258,8 @@ export const EmuBayRailwayCompany = {
         // Sometimes, maybe, I should split something like this
         if (co.open) {
           G.turnLog.push(`!%C${idx} pays ₤${amount} per share (${G.players.map((_, p) => p)
-                                                                          .filter((p) => co.sharesHeld.some(p2 => p2 == p))
-                                                                          .map((p) => `%P${p}: ₤${amount * co.sharesHeld.filter(p1 => p == p1).length}`).join(", ")})`)
+            .filter((p) => co.sharesHeld.some(p2 => p2 == p))
+            .map((p) => `%P${p}: ₤${amount * co.sharesHeld.filter(p1 => p == p1).length}`).join(", ")})`)
         }
 
         co.sharesHeld.forEach((n) => {
