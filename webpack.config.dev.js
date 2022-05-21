@@ -16,23 +16,23 @@ module.exports = {
     ],
   },
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ],
+    extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist-client'),
   },
   devServer: {
-      contentBase: 'dist-client',
-      port: 3000
+    static: 'dist-client',
+    port: 3000
   },
   plugins: [
     new CopyWebpackPlugin({
-        patterns: [
-            { from: 'build/assets', to: 'assets' },
-            { from: 'build/html/css', to: 'css'},
-            { from: 'build/rules', to: 'rules'}
-        ]
+      patterns: [
+        { from: 'build/assets', to: 'assets' },
+        { from: 'build/html/css', to: 'css' },
+        { from: 'build/rules', to: 'rules' }
+      ]
     }),
     new HTMLWebpackPlugin({
       template: 'build/html/index.html'
