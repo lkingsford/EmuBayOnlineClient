@@ -178,18 +178,33 @@
     }
 
     p.EBR,
+    span.EBR,
     h2.EBR {
       color: #0022ff;
     }
 
     p.TMLC,
+    span.TMLC,
     h2.TMLC {
       color: #999900;
     }
 
     p.LW,
+    span.LW,
     h2.LW {
       color: #009900;
+    }
+
+    span.ng {
+      color: #ff0000;
+    }
+
+    span.resource {
+      color: #222222;
+    }
+  
+    .cube {
+      font-size: 2em;
     }
 
     p.GT,
@@ -236,6 +251,14 @@
     #revenue img {
       height: 2em;
     }
+
+    .companyCard {
+      line-height: 1.2em;
+    }
+
+    .companyCard.cash {
+      line-height: 1.8em;
+    }
   </style>
 </head>
 
@@ -258,6 +281,9 @@
         </div>
       </div>
     </div>
+
+    <div class="row" id="playerRow"></div>
+    <div class="row" id="coRow"></div>
 
     <div class="row" id="row2">
       <div class="item twelve columns" id="boarditem">
@@ -304,9 +330,6 @@
       </div>
     </div>
 
-    <div class="row" id="playerRow"></div>
-    <div class="row" id="coRow"></div>
-    <div class="row" id="indRow"></div>
     <div class="row" id="infoRow"></div>
 
     <div class="row">

@@ -516,13 +516,6 @@ export class Ui {
             coRow.classList.add("row");
         }
 
-        let indRow = document.querySelector(`#indRow`);
-        if (!indRow) {
-            indRow = document.createElement("div");
-            indRow.id = `coRow`;
-            indRow.classList.add("row");
-        }
-
         gamestate.companies.forEach((co, idx) => {
             let outerDiv = document.querySelector(`#company${idx}`);
             let contentDiv = document.querySelector(
@@ -547,7 +540,7 @@ export class Ui {
                 outerDiv.classList.add("companyCard");
                 document.querySelector("#maingrid")?.appendChild(outerDiv);
                 outerDiv.classList.add("item");
-                outerDiv.classList.add("three", "columns");
+                outerDiv.classList.add("four", "columns");
 
                 cardDiv = document.createElement("div");
                 outerDiv.appendChild(cardDiv);
@@ -573,25 +566,16 @@ export class Ui {
                 cardDiv.appendChild(contentDiv);
                 contentDiv.classList.add("content");
 
-                if (co.companyType == CompanyType.Major) {
-                    coRow!.appendChild(outerDiv);
-                } else {
-                    indRow!.appendChild(outerDiv);
-                }
+                coRow!.appendChild(outerDiv);
             }
 
             contentDiv!.innerHTML = "";
             let cashP = document.createElement("p");
-            cashP.innerText = `Cash ${Ui.formatCash(co.cash)}`;
+            cashP.innerText = `Cash ${Ui.formatCash(
+                co.cash
+            )} Rev ${Ui.formatCash(co.currentRevenue)}`;
             cashP.classList.add("cash");
             contentDiv?.appendChild(cashP);
-
-            let revP = document.createElement("p");
-            revP.innerText = `Rev ${Ui.formatCash(
-                Math.abs(co.currentRevenue)
-            )}`;
-            revP.classList.add("cash");
-            contentDiv?.appendChild(revP);
 
             if (co.independentsOwned.length != 0) {
                 let indP = document.createElement("p");
@@ -613,48 +597,47 @@ export class Ui {
                 contentDiv?.appendChild(revsplitP);
             }
 
-            let sharesRemainingText =
-                co.sharesRemaining > 0
-                    ? `${co.sharesRemaining} shares remaining`
-                    : "No shares remaining";
+            if (
+                co.trainsRemaining > 0 ||
+                co.narrowGaugeRemaining > 0 ||
+                co.resourcesHeld > 0
+            ) {
+                let trainsP = document.createElement("p");
+                let ordinary = document.createElement("span");
+                ordinary.innerText = "■".repeat(co.trainsRemaining);
+                ordinary.classList.add(`${COMPANY_ABBREV[idx]}`);
+                ordinary.classList.add("cube");
+                trainsP.appendChild(ordinary);
+                let narrow = document.createElement("span");
+                narrow.classList.add("ng");
+                narrow.classList.add("cube");
+                narrow.innerText = "■".repeat(co.narrowGaugeRemaining);
+                trainsP.appendChild(narrow);
+                let resources = document.createElement("span");
+                resources.classList.add("resource");
+                resources.innerText = "⬣".repeat(co.resourcesHeld);
+                trainsP.appendChild(resources);
+                contentDiv?.append(trainsP);
+            }
+
+            let sharesRemainingText = `Shares: ${co.sharesHeld.length} owned, ${co.sharesRemaining} unsold`;
+            if (co.reservedSharesRemaining > 0) {
+                sharesRemainingText += `, ${co.reservedSharesRemaining} reserved`;
+            }
             let srP = document.createElement("p");
             srP.innerText = sharesRemainingText;
             contentDiv?.appendChild(srP);
 
-            if (co.reservedSharesRemaining > 0) {
-                let rsrP = document.createElement("p");
-                rsrP.innerText = `${co.reservedSharesRemaining} reserved shares remaining`;
-                contentDiv?.append(rsrP);
-            }
-
             if (co.bonds.length > 0) {
                 let bondsP = document.createElement("p");
-                bondsP.innerText = `Bonds issued: `;
+                bondsP.innerText = `Bonds: `;
                 contentDiv?.append(bondsP);
 
                 co.bonds.forEach((i) => {
-                    let bondP = document.createElement("p");
-                    bondP.innerText = this.bondToString(i);
-                    contentDiv?.append(bondP);
+                    let bondS = document.createElement("span");
+                    bondS.innerText = this.bondToString(i);
+                    bondsP?.append(bondS);
                 });
-            }
-
-            if (co.trainsRemaining > 0) {
-                let trainsP = document.createElement("p");
-                trainsP.innerText = `${co.trainsRemaining} track remaining`;
-                contentDiv?.append(trainsP);
-            }
-
-            if (co.narrowGaugeRemaining > 0) {
-                let narrowP = document.createElement("p");
-                narrowP.innerText = `${co.narrowGaugeRemaining} narrow gauge track remaining`;
-                contentDiv?.append(narrowP);
-            }
-
-            if (co.resourcesHeld > 0) {
-                let resourcesHeldP = document.createElement("p");
-                resourcesHeldP.innerText = `${co.resourcesHeld} resource cubes held`;
-                contentDiv?.append(resourcesHeldP);
             }
         });
 
@@ -897,9 +880,11 @@ export class Ui {
 
     private bondToString(bond: IBond, held: boolean = true): string {
         if (held) {
-            return `₤${bond.amount!} (₤${bond.baseInterest}Δ₤${
-                bond.interestDelta
-            }/div)${bond.deferred ? " (def)" : ""}`;
+            if (bond.deferred) {
+                return `(₤${bond.baseInterest}Δ₤${bond.interestDelta})`;
+            } else {
+                return `₤${bond.baseInterest}Δ₤${bond.interestDelta}`;
+            }
         } else {
             return `₤${bond.amount!} (₤${bond.baseInterest}Δ₤${
                 bond.interestDelta
