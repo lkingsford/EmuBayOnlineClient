@@ -1,7 +1,8 @@
 import { INVALID_MOVE } from "boardgame.io/core";
 import { Ctx } from "boardgame.io";
+import { move } from "fs-extra";
 
-export const GAME_ID = "emu-bay-railway-company-3";
+export const GAME_ID = "emu-bay-railway-company-4";
 
 enum CompanyID {
     EB = 0,
@@ -125,7 +126,7 @@ interface ITerrain {
     locations: ILocation[];
 }
 
-const fixedNarrowRevenue = 3;
+const fixedNarrowRevenue = 0;
 
 function getTileBiome(tile: ICoordinates): ITerrain | undefined {
     return MAP.find((T) => {
@@ -415,9 +416,9 @@ export function resourceCubeCost(G: IEmuBayState): number {
 export function resourceCubeRevenue(G: IEmuBayState, company: number): number {
     // Maybe this should be in Game too...
     if (connectedToPort(G, company)) {
-        return 3;
+        return 5;
     } else {
-        return 1;
+        return 2;
     }
 }
 
@@ -1838,6 +1839,42 @@ export const EmuBayRailwayCompany = {
                 }
             }
             ctx.events?.endTurn!({ next: TurnNext(G, ctx) });
+        },
+    },
+    ai: {
+        enumerate: (G: IEmuBayState, ctx: Ctx) => {
+            let moves: any[] = [];
+            let currentPlayer = G.players[+ctx.currentPlayer];
+            if (G.pseudoPhase != PseudoPhase.NormalPlay) {
+                let minBid = Math.max(
+                    getMinimumBid(G, G.companyForAuction!),
+                    G.currentBid! + 1
+                );
+                if (currentPlayer.cash >= minBid) {
+                    for (let i = minBid; i <= currentPlayer.cash; ++i) {
+                        moves.push({ move: "makeBid", args: [i] });
+                    }
+                }
+                if (G.currentBid! > 0) {
+                    moves.push({ move: "pass", args: [] });
+                }
+                return moves;
+            }
+            switch (G.pseudoStage) {
+                case PseudoStage.removeCube:
+                    if (stalemateAvailable(G, ctx)) {
+                        moves.push({ move: "declareStalemate", args: [] });
+                    }
+
+                    ACTION_CUBE_LOCATION_ACTIONS.forEach((v, i) => {
+                        if (G.actionCubeLocations[i]) {
+                            moves.push({ move: "removeCube", args: [v] });
+                        }
+                    });
+            }
+            console.log(moves);
+
+            return moves;
         },
     },
 };
