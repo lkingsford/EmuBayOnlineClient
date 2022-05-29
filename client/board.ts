@@ -289,7 +289,7 @@ export class Board extends State.State {
                 this.terrain!.addChild(sprite);
 
                 let priceSprite = new PIXI.Text(`-₤${cost}`);
-                priceSprite.x = x - Board.TILE_WIDTH / 5;
+                priceSprite.x = x;
                 priceSprite.y =
                     sprite.y + Board.TILE_HEIGHT / 2 - Board.TILE_HEIGHT / 5;
                 priceSprite.anchor = new PIXI.Point(0.5, 0.5);
@@ -297,9 +297,9 @@ export class Board extends State.State {
                 this.terrain!.addChild(priceSprite);
 
                 let revSprite = new PIXI.Text(`+₤${rev}`);
-                revSprite.x = x + Board.TILE_WIDTH / 5;
+                revSprite.x = x;
                 revSprite.y =
-                    sprite.y + Board.TILE_HEIGHT / 2 - Board.TILE_HEIGHT / 5;
+                    sprite.y - Board.TILE_HEIGHT / 2 + Board.TILE_HEIGHT / 4;
                 revSprite.anchor = new PIXI.Point(0.5, 0.5);
                 revSprite.style = revStyle;
                 this.terrain!.addChild(revSprite);
