@@ -1855,9 +1855,13 @@ export const EmuBayRailwayCompany = {
                         moves.push({ move: "makeBid", args: [i] });
                     }
                 }
-                if (G.currentBid! > 0) {
+                if (
+                    G.currentBid! > 0 ||
+                    G.pseudoPhase == PseudoPhase.InitialAuction
+                ) {
                     moves.push({ move: "pass", args: [] });
                 }
+                console.log(moves);
                 return moves;
             }
             switch (G.pseudoStage) {
@@ -1869,6 +1873,46 @@ export const EmuBayRailwayCompany = {
                     ACTION_CUBE_LOCATION_ACTIONS.forEach((v, i) => {
                         if (G.actionCubeLocations[i]) {
                             moves.push({ move: "removeCube", args: [v] });
+                        }
+                    });
+
+                case PseudoStage.takeAction:
+                    let availableActions = ACTION_CUBE_LOCATION_ACTIONS.filter(
+                        (v, i) => {
+                            return !G.actionCubeLocations[i];
+                        }
+                    );
+                    availableActions.forEach((v, i) => {
+                        if (v == actions.AuctionShare) {
+                            // Available companies
+                            G.companies
+                                .map((v, i) => ({ value: v, idx: i }))
+                                .filter((c) => {
+                                    if (
+                                        getMinimumBid(G, c.idx) >
+                                        G.players[+ctx.currentPlayer].cash
+                                    ) {
+                                        return false;
+                                    }
+                                    if (c.value.sharesRemaining == 0) {
+                                        return false;
+                                    }
+                                    if (
+                                        c.value.companyType ==
+                                            CompanyType.Minor &&
+                                        (G.independentOrder.length == 0 ||
+                                            c.idx != G.independentOrder[0])
+                                    ) {
+                                        return false;
+                                    }
+                                    return true;
+                                })
+                                .forEach((v, i) => {
+                                    moves.push({
+                                        move: "auctionShare",
+                                        args: [v.idx],
+                                    });
+                                });
                         }
                     });
             }
