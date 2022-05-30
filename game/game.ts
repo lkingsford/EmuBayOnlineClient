@@ -1481,6 +1481,7 @@ export const EmuBayRailwayCompany = {
             company: number,
             bond: number
         ) => {
+            // Todo: Check if player owns
             if (G.pseudoStage != PseudoStage.takeAction) {
                 return INVALID_MOVE;
             }
@@ -1861,7 +1862,6 @@ export const EmuBayRailwayCompany = {
                 ) {
                     moves.push({ move: "pass", args: [] });
                 }
-                console.log(moves);
                 return moves;
             }
             switch (G.pseudoStage) {
@@ -1870,53 +1870,213 @@ export const EmuBayRailwayCompany = {
                         moves.push({ move: "declareStalemate", args: [] });
                     }
 
-                    ACTION_CUBE_LOCATION_ACTIONS.forEach((v, i) => {
+                    new Set(ACTION_CUBE_LOCATION_ACTIONS).forEach((v, i) => {
                         if (G.actionCubeLocations[i]) {
                             moves.push({ move: "removeCube", args: [v] });
                         }
                     });
 
                 case PseudoStage.takeAction:
-                    let availableActions = ACTION_CUBE_LOCATION_ACTIONS.filter(
-                        (v, i) => {
-                            return !G.actionCubeLocations[i];
-                        }
-                    );
+                    let availableActions = [
+                        ...new Set(ACTION_CUBE_LOCATION_ACTIONS),
+                    ].filter((v, i) => {
+                        return !G.actionCubeLocations[i];
+                    });
                     availableActions.forEach((v, i) => {
-                        if (v == actions.AuctionShare) {
-                            // Available companies
-                            G.companies
-                                .map((v, i) => ({ value: v, idx: i }))
-                                .filter((c) => {
-                                    if (
-                                        getMinimumBid(G, c.idx) >
-                                        G.players[+ctx.currentPlayer].cash
-                                    ) {
-                                        return false;
-                                    }
-                                    if (c.value.sharesRemaining == 0) {
-                                        return false;
-                                    }
-                                    if (
-                                        c.value.companyType ==
-                                            CompanyType.Minor &&
-                                        (G.independentOrder.length == 0 ||
-                                            c.idx != G.independentOrder[0])
-                                    ) {
-                                        return false;
-                                    }
-                                    return true;
-                                })
-                                .forEach((v, i) => {
+                        if (v == G.actionCubeTakenFrom) {
+                            return;
+                        }
+                        switch (v) {
+                            case actions.AuctionShare: {
+                                // Available companies
+                                G.companies
+                                    .map((v, i) => ({ value: v, idx: i }))
+                                    .filter((c) => {
+                                        if (
+                                            getMinimumBid(G, c.idx) >
+                                            G.players[+ctx.currentPlayer].cash
+                                        ) {
+                                            return false;
+                                        }
+                                        if (c.value.sharesRemaining == 0) {
+                                            return false;
+                                        }
+                                        if (
+                                            c.value.companyType ==
+                                                CompanyType.Minor &&
+                                            (G.independentOrder.length == 0 ||
+                                                c.idx != G.independentOrder[0])
+                                        ) {
+                                            return false;
+                                        }
+                                        return true;
+                                    })
+                                    .forEach((v, i) => {
+                                        moves.push({
+                                            move: "auctionShare",
+                                            args: [v.idx],
+                                        });
+                                    });
+                            }
+                            case actions.Merge:
+                                getMergableCompanies(G, ctx).forEach((v) => {
                                     moves.push({
-                                        move: "auctionShare",
-                                        args: [v.idx],
+                                        move: "merge",
+                                        args: [v.major, v.minor],
                                     });
                                 });
+                                break;
+
+                            case actions.IssueBond: {
+                                let available = G.companies
+                                    .map((v, i) => ({ value: v, idx: i }))
+                                    .filter((c) => {
+                                        // Have to have share, has to not be private
+                                        if (c.idx >= 3) {
+                                            return false;
+                                        }
+                                        if (
+                                            c.value.sharesHeld.filter(
+                                                (player) =>
+                                                    player == +ctx.currentPlayer
+                                            ).length > 0
+                                        ) {
+                                            return true;
+                                        }
+                                        return false;
+                                    })
+                                    .forEach((co) => {
+                                        G.bonds.forEach((_, bondIdx) => {
+                                            moves.push({
+                                                move: "issueBond",
+                                                args: [co.idx, bondIdx],
+                                            });
+                                        });
+                                    });
+                                break;
+                            }
+
+                            case actions.BuildTrack: {
+                                let available = G.companies
+                                    .map((v, i) => ({ value: v, idx: i }))
+                                    .filter((c) => {
+                                        if (
+                                            c.value.trainsRemaining == 0 &&
+                                            c.value.narrowGaugeRemaining == 0
+                                        ) {
+                                            return false;
+                                        }
+                                        if (
+                                            getAllowedBuildSpaces(
+                                                G,
+                                                BuildMode.Narrow,
+                                                c.idx
+                                            ).length +
+                                                getAllowedBuildSpaces(
+                                                    G,
+                                                    BuildMode.Normal,
+                                                    c.idx
+                                                ).length ==
+                                            0
+                                        ) {
+                                            return false;
+                                        }
+                                        if (
+                                            c.value.sharesHeld.filter(
+                                                (player) =>
+                                                    player == +ctx.currentPlayer
+                                            ).length > 0
+                                        ) {
+                                            return true;
+                                        }
+                                        return false;
+                                    })
+                                    .forEach((_, co_idx) => {
+                                        moves.push({
+                                            move: "buildTrackAction",
+                                            args: [co_idx],
+                                        });
+                                    });
+                                break;
+                            }
+
+                            case actions.TakeResources: {
+                                let available = G.companies
+                                    .map((v, i) => ({ value: v, idx: i }))
+                                    .filter((c) => {
+                                        if (
+                                            c.value.sharesHeld.filter(
+                                                (player) =>
+                                                    player == +ctx.currentPlayer
+                                            ).length == 0
+                                        ) {
+                                            return false;
+                                        }
+                                        if (
+                                            getTakeResourceSpaces(G, c.idx)
+                                                .length == 0
+                                        ) {
+                                            return false;
+                                        }
+                                        return true;
+                                    })
+                                    .forEach((_, co_idx) => {
+                                        moves.push({
+                                            move: "mineResource",
+                                            args: [co_idx],
+                                        });
+                                    });
+                                break;
+                            }
+
+                            case actions.PayDividend:
+                                moves.push({ move: "payDividends", args: [] });
+                                break;
                         }
                     });
+                case PseudoStage.buildingTrack:
+                    if (!G.toAct) {
+                        break;
+                    }
+                    getAllowedBuildSpaces(
+                        G,
+                        BuildMode.Narrow,
+                        G.toAct!
+                    ).forEach((i) => {
+                        moves.push({
+                            move: "buildTrack",
+                            args: [{ x: i.x, y: i.y }, BuildMode.Narrow],
+                        });
+                    });
+                    getAllowedBuildSpaces(
+                        G,
+                        BuildMode.Normal,
+                        G.toAct!
+                    ).forEach((i) => {
+                        moves.push({
+                            move: "buildTrack",
+                            args: [{ x: i.x, y: i.y }, BuildMode.Normal],
+                        });
+                    });
+                    if (G.anyActionsTaken) {
+                        moves.push({ move: "doneBuilding", args: [] });
+                    }
+                    break;
+                case PseudoStage.removeCube:
+                    if (!G.toAct) {
+                        break;
+                    }
+                    getTakeResourceSpaces(G, G.toAct!).forEach((i) => {
+                        moves.push({
+                            move: "takeResource",
+                            args: [{ x: i.x, y: i.y }],
+                        });
+                    });
+                    if (G.anyActionsTaken) {
+                        moves.push({ move: "doneTaking", args: [] });
+                    }
+                    break;
             }
-            console.log(moves);
 
             return moves;
         },
