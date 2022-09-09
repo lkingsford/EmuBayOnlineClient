@@ -71,8 +71,8 @@
     .card .content p {
       margin: 0;
       padding: 0;
-      margin-left: 1em;
-      margin-right: 1em;
+      margin-left: 0.5em;
+      margin-right: 0.5em;
     }
 
     .currentplayer h1 {
@@ -202,7 +202,7 @@
     span.resource {
       color: #222222;
     }
-  
+
     .cube {
       font-size: 2em;
     }
@@ -259,20 +259,20 @@
     .companyCard.cash {
       line-height: 1.8em;
     }
+
+    .priceTableEntry {
+      max-height: 2em;
+      display: inline-block;
+    }
+
+    .priceTableEntry img {
+      max-height: 2em;
+    }
   </style>
 </head>
 
 <body>
-  <div id="maingrid">
-      <div class="row" id="actionrow">
-      <div class="item twelve columns" id="actions">
-        <div class="card content" id="loginnerdiv">
-          <h1>Actions</h1>
-          <div class="content" id="actioncontent"></div>
-        </div>
-      </div>
-    </div>
-
+  <div id="maingrid container">
     <div class="row" id="logRow">
       <div class="item twelve columns" id="logitem">
         <div class="card" id="loginnerdiv">
@@ -282,55 +282,112 @@
       </div>
     </div>
 
-    <div class="row" id="playerRow"></div>
-    <div class="row" id="coRow"></div>
+    <div class="row" id="actionrow">
+      <div class="item twelve columns" id="actions">
+        <div class="card content" id="loginnerdiv">
+          <h1>Actions</h1>
+          <div class="content" id="actioncontent"></div>
+        </div>
+      </div>
+    </div>
 
-    <div class="row" id="row2">
-      <div class="item twelve columns" id="boarditem">
+    <div class="row" id="companyData"></div>
+
+    <div class="row">
+      <div class="item three columns">
+        <div class="row" id="playerData"></div>
+        <div class="row" id="infoRow"></div>
+        <div class="row">
+          <div class="card">
+            <h1>Revenue</h1>
+            <div class="row">
+              <div class="priceTableEntry">
+                <img src="images/FarmTown.png" />
+                ₤2
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Town.png" />
+                ₤2
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/2Town.png" />
+                ₤4
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/3Town.png" />
+                ₤6
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Hill.png" />
+                ₤1
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Mountain.png" />
+                ₤2
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Coal.png" />
+                ₤1
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/CoalPort.png" />
+                ₤3
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/NG.png" />
+                ₤3
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Farm.png" />
+                ₤0
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Port.png" />
+                ₤0
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="card">
+            <h1>Cost</h1>
+            <div class="row">
+              <div class="priceTableEntry">
+                <img src="images/Farm.png" />
+                ₤4/₤8
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Town.png" />
+                ₤6/₤10
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Port.png" />
+                ₤6/₤10
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Hill.png" />
+                ₤5/na
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Mountain.png" />
+                ₤10/na
+              </div>
+              <div class="priceTableEntry">
+                <img src="images/Coal.png" />
+                ₤3 (Take)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="item nine columns" id="boarditem">
         <div class="card" id="boardcontent">
           <h1>Map</h1>
           <div class="content" id="board"></div>
         </div>
       </div>
     </div>
-
-    <div class="row">
-      <div class="item twelve columns">
-        <div class="card" id="revenue">
-          <h1>Revenue</h1>
-          <div class="content">
-            <table>
-            <tr><td><img src="images/FarmTown.png"/></td><td>₤2</td>
-            <td><img src="images/Town.png"/></td><td>₤2</td>
-            <td><img src="images/2Town.png"/></td><td>₤4</td>
-            <td><img src="images/3Town.png"/></td><td>₤6</td>
-            <td><img src="images/Hill.png"/></td><td>₤1</td>
-            <td><img src="images/Mountain.png"/></td><td>₤2</td>
-            <td><img src="images/Coal.png"/></td><td>₤1</td></tr>
-            <tr><td><img src="images/CoalPort.png"/></td><td>₤3</td>
-            <td><img src="images/NG.png"/></td><td>₤3</td>
-            <td><img src="images/Farm.png"/></td><td>₤0</td>
-            <td><img src="images/Port.png"/></td><td>₤0</td></tr>
-            </table>
-          </div>
-          <h1>Cost</h1>
-          <div class="content">
-            <table>
-            <tr>
-            <td><img src="images/Farm.png"/></td><td>₤4/₤8</td>
-              <td><img src="images/Town.png"/></td><td>₤6/₤10</td>
-            <td><img src="images/Port.png"/></td><td>₤6/₤10</td>
-            <td><img src="images/Hill.png"/></td><td>₤5/na</td>
-            <td><img src="images/Mountain.png"/></td><td>₤10/na</td>
-            <td><img src="images/Coal.png"/></td><td>₤3 (Take)</td>
-            </tr>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row" id="infoRow"></div>
 
     <div class="row">
       <div class="item four columns">
