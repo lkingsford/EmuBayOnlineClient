@@ -618,7 +618,7 @@ export class Ui {
                 contentDiv?.append(trainsP);
             }
 
-            let sharesRemainingText = `Shares: ${co.sharesRemaining - co.sharesHeld.length}/${co.sharesRemaining}`;
+            let sharesRemainingText = `Shares: ${co.sharesRemaining}/${co.sharesRemaining + co.sharesHeld.length}`;
             if (co.reservedSharesRemaining > 0) {
                 sharesRemainingText += ` (${co.reservedSharesRemaining} rsvd)`;
             }
