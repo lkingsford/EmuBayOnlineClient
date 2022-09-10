@@ -545,7 +545,7 @@ export class Ui {
                 cardDiv.classList.add("card");
 
                 let coName = document.createElement("h1");
-                coName.innerText = `${COMPANY_NAME[idx]}`;
+                coName.innerText = `${COMPANY_ABBREV[idx]}`;
                 coName.classList.add(`${COMPANY_ABBREV[idx]}`);
                 cardDiv.appendChild(coName);
 
@@ -569,9 +569,9 @@ export class Ui {
 
             contentDiv!.innerHTML = "";
             let cashP = document.createElement("p");
-            cashP.innerText = `Cash ${Ui.formatCash(
+            cashP.innerText = `${Ui.formatCash(
                 co.cash
-            )} Rev ${Ui.formatCash(co.currentRevenue)}`;
+            )} (Rev ${Ui.formatCash(co.currentRevenue)})`;
             cashP.classList.add("cash");
             contentDiv?.appendChild(cashP);
 
@@ -618,9 +618,9 @@ export class Ui {
                 contentDiv?.append(trainsP);
             }
 
-            let sharesRemainingText = `Shares: ${co.sharesHeld.length} owned, ${co.sharesRemaining} unsold`;
+            let sharesRemainingText = `Shares: ${co.sharesRemaining - co.sharesHeld.length}/${co.sharesRemaining}`;
             if (co.reservedSharesRemaining > 0) {
-                sharesRemainingText += `, ${co.reservedSharesRemaining} reserved`;
+                sharesRemainingText += ` (${co.reservedSharesRemaining} rsvd)`;
             }
             let srP = document.createElement("p");
             srP.innerText = sharesRemainingText;
